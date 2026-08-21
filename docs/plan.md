@@ -21,7 +21,7 @@ Every requirement below comes straight from the statement.
 - [x] **R9** — Generation runs on a background thread and never blocks the UI · *quality*
 - [ ] **R10** — Deliverable: project sources plus the built executable · *deliverable*
 - [x] **R11** — Deliverable: a JSON file with test data · *deliverable*
-- [ ] **R12** — Deliverable: README stating the Delphi version, the program structure and what could be improved with more time · *deliverable*
+- [x] **R12** — Deliverable: README stating the Delphi version, the program structure and what could be improved with more time · *deliverable*
 
 ## Beyond the statement
 
@@ -32,7 +32,7 @@ in the ADRs rather than smuggled in:
       database ([ADR 0004](adr/0004-sqlite-for-local-persistence.md), [ADR 0005](adr/0005-database-file-location.md)) · *feature*
 - [x] **P2** — filtering and search are expressed as SQL against that database rather than as a scan
       over an array · *feature*
-- [ ] **P3** — the README states where the database file lives and that deleting that folder resets
+- [x] **P3** — the README states where the database file lives and that deleting that folder resets
       the application to empty · *deliverable*
 - [x] **P4** — the window can clear the stored history, since nothing else in the application removes
       events ([ADR 0009](adr/0009-json-import-semantics.md)) · *feature*
