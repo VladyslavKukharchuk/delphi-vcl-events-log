@@ -111,12 +111,24 @@ Two failure modes, two mechanisms:
 What counts as unusable is deliberately narrow. `severity` is matched case-insensitively against the
 same `SeverityNames` the rest of the application uses, so `ERROR` and `error` both pass while `Critical`
 does not: an unknown level rejects the record rather than silently becoming `Info`, because guessing at
-severity is worse than admitting the record is broken. `time` must parse as the ISO 8601 form from ADR
-0006. Unknown keys are ignored.
+severity is worse than admitting the record is broken. Unknown keys are ignored.
+
+`time` is read by `TryISO8601ToDate` from the RTL rather than by a parser of our own, with the
+`ioNoTZIsLocal` option — which is decision D3 spelled as a flag: a string carrying no offset is local
+time. A `Z` or an explicit `+03:00` is honoured and converted, where a hand-rolled reader had silently
+dropped the `Z` and treated a UTC timestamp as local while rejecting the offset form outright. The RTL
+parser also reports *which* part it rejected, so a bad timestamp says "the time zone is wrong" rather
+than only naming the field. Writing still goes through `FormatDateTime`, because `DateToISO8601` always
+appends a `Z` and would declare a local time to be UTC.
+
+A key that is absent and a key holding the wrong kind of value are also distinguished, because
+`TryGetValue<string>` conflates them and the resulting message misleads: `"severity": 3` would be
+reported as a record that *has no severity*. The reader looks the key up first and then checks its
+type, so the two say different things.
 
 Three sample files ship rather than one, because a claim about withstanding bad input is worth being
 able to demonstrate: `sample-events.json` is the good file the statement asks for,
-`sample-events-invalid.json` is valid JSON whose records are broken in six different ways, and
+`sample-events-invalid.json` is valid JSON whose records are broken in seven different ways, and
 `sample-events-malformed.json` is not valid JSON at all.
 
 ## Consequences

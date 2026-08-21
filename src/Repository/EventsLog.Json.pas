@@ -39,7 +39,9 @@ resourcestring
   SNotArray = '%s does not contain a JSON array of events.';
   SNotAnObject = 'record %d is not a JSON object';
   SMissingField = 'record %d has no %s';
-  SBadField = 'record %d has an unusable %s: %s';
+  SNotText = 'record %d has a %s that is not text: %s';
+  SBadTime = 'record %d has an unusable time, the %s is wrong: %s';
+  SBadSeverity = 'record %d has an unknown severity: %s';
 
 { TImportReport }
 
@@ -51,6 +53,30 @@ begin
   FFirstProblem := AFirstProblem;
 end;
 
+{ A key that is absent and a key holding the wrong kind of value are different
+  mistakes, and saying so is the difference between a message that helps and one
+  that misleads. Values[] returns nil for an absent key. }
+function TryReadText(AItem: TJSONObject; AIndex: Integer; const AName: string;
+  out AText: string; out AProblem: string): Boolean;
+var
+  Node: TJSONValue;
+begin
+  Result := False;
+  Node := AItem.Values[AName];
+  if Node = nil then
+  begin
+    AProblem := Format(SMissingField, [AIndex, AName]);
+    Exit;
+  end;
+  if not (Node is TJSONString) then
+  begin
+    AProblem := Format(SNotText, [AIndex, AName, Node.ToJSON]);
+    Exit;
+  end;
+  AText := Node.Value;
+  Result := True;
+end;
+
 function TryElementToEvent(AElement: TJSONValue; AIndex: Integer;
   out AEvent: TLogEvent; out AProblem: string): Boolean;
 var
@@ -58,6 +84,7 @@ var
   EventTime: TDateTime;
   Raw, EventText: string;
   Severity: TEventSeverity;
+  TimeProblem: Integer;
 begin
   Result := False;
   if not (AElement is TJSONObject) then
@@ -67,31 +94,23 @@ begin
   end;
   Item := TJSONObject(AElement);
 
-  if not Item.TryGetValue<string>('time', Raw) then
-  begin
-    AProblem := Format(SMissingField, [AIndex, 'time']);
+  if not TryReadText(Item, AIndex, 'time', Raw, AProblem) then
     Exit;
-  end;
-  if not TryTextToTime(Raw, EventTime) then
+  if not TryTextToTime(Raw, EventTime, TimeProblem) then
   begin
-    AProblem := Format(SBadField, [AIndex, 'time', Raw]);
-    Exit;
-  end;
-
-  if not Item.TryGetValue<string>('text', EventText) then
-  begin
-    AProblem := Format(SMissingField, [AIndex, 'text']);
+    AProblem := Format(SBadTime,
+      [AIndex, TimeProblemToStr(TimeProblem), Raw]);
     Exit;
   end;
 
-  if not Item.TryGetValue<string>('severity', Raw) then
-  begin
-    AProblem := Format(SMissingField, [AIndex, 'severity']);
+  if not TryReadText(Item, AIndex, 'text', EventText, AProblem) then
     Exit;
-  end;
+
+  if not TryReadText(Item, AIndex, 'severity', Raw, AProblem) then
+    Exit;
   if not TryStrToSeverity(Raw, Severity) then
   begin
-    AProblem := Format(SBadField, [AIndex, 'severity', Raw]);
+    AProblem := Format(SBadSeverity, [AIndex, Raw]);
     Exit;
   end;
 
