@@ -28,6 +28,10 @@ const
 function SeverityToStr(ASeverity: TEventSeverity): string;
 function TryStrToSeverity(const AValue: string; out ASeverity: TEventSeverity): Boolean;
 
+{ Canonical UUID text, without the braces Delphi puts around it (ADR 0006). }
+function GuidToText(const AId: TGUID): string;
+function TryTextToGuid(const AValue: string; out AId: TGUID): Boolean;
+
 implementation
 
 uses
@@ -67,6 +71,27 @@ begin
       Exit;
     end;
   Result := False;
+end;
+
+function GuidToText(const AId: TGUID): string;
+begin
+  Result := Copy(AId.ToString, 2, 36);
+end;
+
+function TryTextToGuid(const AValue: string; out AId: TGUID): Boolean;
+var
+  Braced: string;
+begin
+  Braced := Trim(AValue);
+  if (Braced <> '') and (Braced[1] <> '{') then
+    Braced := '{' + Braced + '}';
+  try
+    AId := StringToGUID(Braced);
+    Result := True;
+  except
+    on EConvertError do
+      Result := False;
+  end;
 end;
 
 end.
