@@ -24,7 +24,7 @@ object MainForm: TMainForm
     object LabelSearch: TLabel
       Left = 8
       Top = 48
-      Width = 42
+      Width = 38
       Height = 15
       Caption = 'Search:'
       FocusControl = EditSearch
@@ -32,7 +32,7 @@ object MainForm: TMainForm
     object LabelSeverity: TLabel
       Left = 480
       Top = 48
-      Width = 48
+      Width = 44
       Height = 15
       Caption = 'Severity:'
       FocusControl = ComboSeverity
