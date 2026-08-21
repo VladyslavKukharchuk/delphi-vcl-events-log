@@ -10,12 +10,12 @@ Tick a box when the corresponding pull request is merged, not when the code is w
 
 Every requirement below comes straight from the statement.
 
-- [ ] **R1** — An event carries an ID, a timestamp, text and a severity level (Info / Warning / Error) · *model*
+- [x] **R1** — An event carries an ID, a timestamp, text and a severity level (Info / Warning / Error) · *model*
 - [x] **R2** — Main window shows the events in a table, with every attribute visible · *UI*
 - [x] **R3** — Event history loads from a JSON file · *feature*
 - [x] **R4** — Malformed files and invalid data never crash the application · *quality*
-- [ ] **R5** — Search events by their text · *feature*
-- [ ] **R6** — Filter events by severity level · *feature*
+- [x] **R5** — Search events by their text · *feature*
+- [x] **R6** — Filter events by severity level · *feature*
 - [ ] **R7** — The generator can be switched on and off · *UI*
 - [ ] **R8** — While on, one random event is appended to the shared list every second · *feature*
 - [ ] **R9** — Generation runs on a background thread and never blocks the UI · *quality*
@@ -28,15 +28,15 @@ Every requirement below comes straight from the statement.
 Wanted for this project rather than required by the statement, and recorded as deliberate extensions
 in the ADRs rather than smuggled in:
 
-- [ ] **P1** — events survive a restart: the list is loaded from and written to a local SQLite
+- [x] **P1** — events survive a restart: the list is loaded from and written to a local SQLite
       database ([ADR 0004](adr/0004-sqlite-for-local-persistence.md), [ADR 0005](adr/0005-database-file-location.md)) · *feature*
-- [ ] **P2** — filtering and search are expressed as SQL against that database rather than as a scan
+- [x] **P2** — filtering and search are expressed as SQL against that database rather than as a scan
       over an array · *feature*
 - [ ] **P3** — the README states where the database file lives and that deleting that folder resets
       the application to empty · *deliverable*
-- [ ] **P4** — the window can clear the stored history, since nothing else in the application removes
+- [x] **P4** — the window can clear the stored history, since nothing else in the application removes
       events ([ADR 0009](adr/0009-json-import-semantics.md)) · *feature*
-- [ ] **P5** — the JSON validation is covered by DUnitX table tests, using the sample files as
+- [x] **P5** — the JSON validation is covered by DUnitX table tests, using the sample files as
       fixtures. Runnable from the IDE only, since Personal edition refuses command-line compiling ·
       *quality*
 
@@ -80,9 +80,12 @@ recorded in an ADR.
 - [x] **D11 — how the view refreshes after a write** — re-run the current query, coalesced. Appending
       to the array would duplicate the predicate as Pascal beside the SQL, and two copies of one rule
       drift. [ADR 0007](adr/0007-event-repository.md).
-- [ ] **D12 — case-insensitive search beyond ASCII** — SQLite's LIKE and lower() fold ASCII only, so
-      searching "помилка" will not match "Помилка". Either accept it and document the limit, or add a
-      lowercased shadow column filled with Delphi's Unicode-aware ToLower.
+- [x] **D12 — case-insensitive search beyond ASCII** — accepted as a limit rather than fixed. SQLite's
+      LIKE folds ASCII only, so searching "помилка" will not match "Помилка". A lowercased shadow
+      column would cost a schema change, a migration and a second copy of every message on disk, for
+      text this application never produces. Recorded in
+      [ADR 0010](adr/0010-search-and-severity-filter.md); the README states the limit under what could
+      be improved.
 
 ## Out of scope
 

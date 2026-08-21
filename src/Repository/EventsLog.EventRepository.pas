@@ -31,7 +31,10 @@ type
     procedure DeleteAll;
     function Query(const AFilter: TEventFilter;
       ALimit: Integer = DefaultQueryLimit): TArray<TLogEvent>;
-    function Count: Int64;
+    function Count: Int64; overload;
+    { How many events the filter matches. The window needs it to tell a filter
+      that hides events from a query that was capped by its limit. }
+    function Count(const AFilter: TEventFilter): Int64; overload;
   end;
 
 implementation
@@ -89,6 +92,14 @@ begin
   if Length(Conditions) = 0 then
     Exit('');
   Result := ' where ' + string.Join(' and ', Conditions);
+end;
+
+{ The pattern is the only parameter WhereClause leaves open: the severity list
+  is already part of its text. }
+procedure BindFilter(ACursor: TFDQuery; const AFilter: TEventFilter);
+begin
+  if AFilter.SearchText <> '' then
+    ACursor.ParamByName('pattern').AsString := LikePattern(AFilter.SearchText);
 end;
 
 function RowToEvent(ACursor: TFDQuery): TLogEvent;
@@ -160,8 +171,7 @@ begin
     Cursor.Connection := FDatabase.Connection;
     Cursor.SQL.Text := SqlSelect + WhereClause(AFilter) +
       ' order by time desc limit :limit';
-    if AFilter.SearchText <> '' then
-      Cursor.ParamByName('pattern').AsString := LikePattern(AFilter.SearchText);
+    BindFilter(Cursor, AFilter);
     Cursor.ParamByName('limit').AsInteger := ALimit;
     Cursor.Open;
     Events := TList<TLogEvent>.Create;
@@ -188,6 +198,22 @@ end;
 function TEventRepository.Count: Int64;
 begin
   Result := FDatabase.Connection.ExecSQLScalar(SqlCount);
+end;
+
+function TEventRepository.Count(const AFilter: TEventFilter): Int64;
+var
+  Cursor: TFDQuery;
+begin
+  Cursor := TFDQuery.Create(nil);
+  try
+    Cursor.Connection := FDatabase.Connection;
+    Cursor.SQL.Text := SqlCount + WhereClause(AFilter);
+    BindFilter(Cursor, AFilter);
+    Cursor.Open;
+    Result := Cursor.Fields[0].AsLargeInt;
+  finally
+    Cursor.Free;
+  end;
 end;
 
 end.
