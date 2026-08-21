@@ -3,7 +3,7 @@ unit Main;
 interface
 
 uses
-  Winapi.Windows, Winapi.Messages, System.SysUtils, System.Classes,
+  Winapi.Windows, Winapi.Messages, System.SysUtils, System.Classes, System.UITypes,
   Vcl.Graphics, Vcl.Controls, Vcl.Forms, Vcl.Dialogs, Vcl.ComCtrls,
   EventsLog.Event, EventsLog.Filter, EventsLog.Database,
   EventsLog.EventRepository;
