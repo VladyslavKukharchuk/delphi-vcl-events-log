@@ -29,8 +29,9 @@ The statement leaves these unspecified, and each one changes the code. The propo
 dash is what we go with unless decided otherwise; tick the box once the decision is settled and
 recorded in an ADR.
 
-- [ ] **D1 — who issues IDs** — the store issues sequential IDs; on import the counter moves
-      past the highest ID in the file, so the generator cannot produce duplicates.
+- [x] **D1 — who issues IDs** — identifiers are UUIDs minted by whoever creates the event, so
+      there is no counter and no coordination between imported and generated events. Recorded in
+      [ADR 0003](adr/0003-uuid-event-identifiers.md).
 - [ ] **D2 — import replaces or appends** — replaces, asking for confirmation when the list is
       not empty. "Event history" reads as loading a state rather than adding to one.
 - [ ] **D3 — timestamp format in JSON** — ISO 8601 (`2026-08-21T07:43:12`) via
@@ -40,6 +41,9 @@ recorded in an ADR.
 - [ ] **D5 — auto-scroll while generating** — no forced scrolling, otherwise the list cannot be
       read while events keep arriving.
 - [ ] **D6 — executable bitness for delivery** — ship both Win32 and Win64 in the release.
+- [ ] **D7 — how the identifier is displayed** — a 36-character UUID does not belong in a grid
+      column next to a message; most likely a shortened form with the full value available on demand.
+      Decided together with the table.
 
 ## Out of scope
 
