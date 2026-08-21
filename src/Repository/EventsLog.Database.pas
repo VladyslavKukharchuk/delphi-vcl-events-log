@@ -33,7 +33,7 @@ implementation
 uses
   System.IOUtils,
   FireDAC.Stan.Intf, FireDAC.Stan.Option, FireDAC.Stan.Error, FireDAC.Stan.Def,
-  FireDAC.Stan.Async, FireDAC.UI.Intf, FireDAC.ConsoleUI.Wait,
+  FireDAC.Stan.Async, FireDAC.UI.Intf,
   FireDAC.Phys.Intf, FireDAC.Phys, FireDAC.Phys.SQLite, FireDAC.Phys.SQLiteDef,
   FireDAC.Phys.SQLiteWrapper.Stat,
   FireDAC.DatS, FireDAC.DApt.Intf, FireDAC.DApt;
