@@ -47,10 +47,12 @@ recorded in an ADR.
 - [ ] **D2 — import replaces or appends** — replaces, asking for confirmation when the list is
       not empty. "Event history" reads as loading a state rather than adding to one. With
       persistence, "replaces" also means deleting the stored rows, not only the in-memory list.
-- [ ] **D3 — timestamp format in JSON** — ISO 8601 (`2026-08-21T07:43:12`) via
-      `System.DateUtils`, local time.
-- [ ] **D4 — severity in JSON** — a case-insensitive string; an unknown value makes the record
-      invalid (skipped and reported) instead of silently becoming Info.
+- [x] **D3 — timestamp format in JSON** — ISO 8601 (`2026-08-21T07:43:12.160`),
+      fixed width and local time, shared with the database column. Recorded in
+      [ADR 0006](adr/0006-database-schema-and-encodings.md); `TimeToText` / `TryTextToTime` implement it.
+- [x] **D4 — severity in JSON** — a case-insensitive string; an unknown value makes the record
+      invalid (skipped and reported) instead of silently becoming Info. `TryStrToSeverity` compares
+      against `SeverityNames` with `SameText`.
 - [ ] **D5 — auto-scroll while generating** — no forced scrolling, otherwise the list cannot be
       read while events keep arriving.
 - [ ] **D6 — executable bitness for delivery** — ship both Win32 and Win64 in the release.
@@ -61,11 +63,18 @@ recorded in an ADR.
       array that the virtual list reads by index; the unfiltered view is the most recent rows by
       time, bounded by a limit. Memory holds the result, not the whole log. True paging with windows
       fetched on scroll was rejected as over-engineering here.
-- [ ] **D9 — when a generated event is written** — one INSERT per event, or a batched transaction.
-      One row per second is modest, but in SQLite it is the transaction, not the row, that costs.
-- [ ] **D10 — which thread owns the connection** — a `TFDConnection` is not safe to share between
-      threads and SQLite allows one writer. Either the generator posts to the UI thread and a single
-      connection serves everything, or it gets its own connection and the journal runs in WAL mode.
+- [x] **D9 — when a generated event is written** — one INSERT per event; import instead wraps the
+      delete and every insert in one explicit transaction. Batch what arrives in bulk, not what
+      arrives one row a second. [ADR 0007](adr/0007-event-repository.md).
+- [x] **D10 — which thread owns the connection** — the UI thread, and only it. The generator hands
+      the event over with `TThread.Queue`, which it must do anyway to trigger a repaint, so the
+      database is never touched by two threads. [ADR 0007](adr/0007-event-repository.md).
+- [x] **D11 — how the view refreshes after a write** — re-run the current query, coalesced. Appending
+      to the array would duplicate the predicate as Pascal beside the SQL, and two copies of one rule
+      drift. [ADR 0007](adr/0007-event-repository.md).
+- [ ] **D12 — case-insensitive search beyond ASCII** — SQLite's LIKE and lower() fold ASCII only, so
+      searching "помилка" will not match "Помилка". Either accept it and document the limit, or add a
+      lowercased shadow column filled with Delphi's Unicode-aware ToLower.
 
 ## Out of scope
 
