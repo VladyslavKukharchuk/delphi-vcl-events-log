@@ -11,7 +11,7 @@ Tick a box when the corresponding pull request is merged, not when the code is w
 Every requirement below comes straight from the statement.
 
 - [ ] **R1** — An event carries an ID, a timestamp, text and a severity level (Info / Warning / Error) · *model*
-- [ ] **R2** — Main window shows the events in a table, with every attribute visible · *UI*
+- [x] **R2** — Main window shows the events in a table, with every attribute visible · *UI*
 - [ ] **R3** — Event history loads from a JSON file · *feature*
 - [ ] **R4** — Malformed files and invalid data never crash the application · *quality*
 - [ ] **R5** — Search events by their text · *feature*
@@ -56,9 +56,10 @@ recorded in an ADR.
 - [ ] **D5 — auto-scroll while generating** — no forced scrolling, otherwise the list cannot be
       read while events keep arriving.
 - [ ] **D6 — executable bitness for delivery** — ship both Win32 and Win64 in the release.
-- [ ] **D7 — how the identifier is displayed** — a 36-character UUID does not belong in a grid
-      column next to a message; most likely a shortened form with the full value available on demand.
-      Decided together with the table.
+- [x] **D7 — how the identifier is displayed** — in full. A truncated UUID is shorter but cannot be
+      copied, compared or pasted into a query, and the statement asks for the attributes to be shown
+      rather than hinted at. The cost is a 250-pixel column and a 1000-pixel window.
+      [ADR 0008](adr/0008-listview-for-the-events-table.md).
 - [x] **D8 — what the UI reads** — SQL does the filtering and the result is materialised into an
       array that the virtual list reads by index; the unfiltered view is the most recent rows by
       time, bounded by a limit. Memory holds the result, not the whole log. True paging with windows
