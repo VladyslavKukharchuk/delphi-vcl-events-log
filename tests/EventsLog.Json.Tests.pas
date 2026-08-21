@@ -124,22 +124,26 @@ begin
   Events := LoadEventsFromFile(Sample(AFileName), Report);
   Assert.AreEqual(AAccepted, Report.Accepted, 'accepted');
   Assert.AreEqual(ARejected, Report.Rejected, 'rejected');
-  Assert.AreEqual(AAccepted, Length(Events), 'events returned');
+  { Length returns NativeInt on Win64, so the cast is what lets AreEqual infer
+    a single type. }
+  Assert.AreEqual(AAccepted, Integer(Length(Events)), 'events returned');
 end;
 
 procedure TJsonImportTests.UnusableFileRaises(const AFileName: string);
 var
-  Path: string;
+  Report: TImportReport;
+  Raised: Boolean;
 begin
-  Path := Sample(AFileName);
-  Assert.WillRaise(
-    procedure
-    var
-      Report: TImportReport;
-    begin
-      LoadEventsFromFile(Path, Report);
-    end,
-    EEventImportError);
+  { Written out rather than through Assert.WillRaise, which does not take an
+    anonymous method in this version of DUnitX. }
+  Raised := False;
+  try
+    LoadEventsFromFile(Sample(AFileName), Report);
+  except
+    on EEventImportError do
+      Raised := True;
+  end;
+  Assert.IsTrue(Raised, 'expected EEventImportError for ' + AFileName);
 end;
 
 procedure TJsonImportTests.FirstProblemIsUseful(const AFileName,
@@ -230,7 +234,8 @@ var
 begin
   Assert.AreEqual(AExpected, TryStrToSeverity(AText, Severity), 'accepted');
   if AExpected then
-    Assert.AreEqual(AOrdinal, Ord(Severity), 'level');
+    { Ord of a one-byte enumeration is narrower than Integer, hence the cast. }
+    Assert.AreEqual(AOrdinal, Integer(Ord(Severity)), 'level');
 end;
 
 initialization
