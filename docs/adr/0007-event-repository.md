@@ -1,6 +1,6 @@
 # 0007. Writes, connection ownership and how the view refreshes
 
-- **Status:** accepted
+- **Status:** accepted; the import half of D9 is revised by [ADR 0009](0009-json-import-semantics.md)
 - **Date:** 2026-08-21
 
 ## Context

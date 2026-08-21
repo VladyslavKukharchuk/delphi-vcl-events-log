@@ -1,0 +1,11 @@
+[
+  { "time": "2026-08-20T10:00:00.000", "text": "Valid record, imported", "severity": "Info" },
+  { "text": "Rejected: no time at all", "severity": "Warning" },
+  { "time": "20 August 2026, 10:03", "text": "Rejected: the time is not ISO 8601", "severity": "Warning" },
+  { "time": "2026-08-20T10:04:00+99:99", "text": "Rejected: the offset is not a real time zone", "severity": "Info" },
+  { "time": "2026-08-20T10:05:00.000", "severity": "Error" },
+  { "time": "2026-08-20T10:06:00.000", "text": "Rejected: Critical is not one of the three levels", "severity": "Critical" },
+  { "time": "2026-08-20T10:07:00.000", "text": "Rejected: severity is a number, not text", "severity": 3 },
+  "Rejected: this element is a string, not an object",
+  { "time": "2026-08-20T10:09:00.000", "text": "Valid record, imported. The id key below is ignored", "severity": "Error", "id": "whatever" }
+]

@@ -4,17 +4,24 @@ interface
 
 uses
   Winapi.Windows, Winapi.Messages, System.SysUtils, System.Classes, System.UITypes,
-  Vcl.Graphics, Vcl.Controls, Vcl.Forms, Vcl.Dialogs, Vcl.ComCtrls,
+  Vcl.Graphics, Vcl.Controls, Vcl.Forms, Vcl.Dialogs, Vcl.ComCtrls, Vcl.ExtCtrls,
+  Vcl.StdCtrls,
   EventsLog.Event, EventsLog.Filter, EventsLog.Database,
-  EventsLog.EventRepository;
+  EventsLog.EventRepository, EventsLog.Json;
 
 type
   TMainForm = class(TForm)
+    PanelTop: TPanel;
+    ButtonImport: TButton;
+    ButtonClear: TButton;
     StatusBar: TStatusBar;
     ListViewEvents: TListView;
+    OpenDialogJson: TOpenDialog;
     procedure FormCreate(Sender: TObject);
     procedure FormDestroy(Sender: TObject);
     procedure ListViewEventsData(Sender: TObject; Item: TListItem);
+    procedure ButtonImportClick(Sender: TObject);
+    procedure ButtonClearClick(Sender: TObject);
   private
     FDatabase: TEventsDatabase;
     FRepository: TEventRepository;
@@ -23,6 +30,7 @@ type
       reads this by index, so it is the only copy of what the user sees. }
     FVisible: TArray<TLogEvent>;
     procedure RefreshView;
+    procedure ReportImport(const AFileName: string; const AReport: TImportReport);
   end;
 
 var
@@ -36,6 +44,9 @@ resourcestring
   SDatabaseUnavailable = 'The event database is not available.';
   SShowingSome = 'Showing the %d most recent of %d events';
   SShowingAll = '%d events';
+  SImportedFrom = 'Imported %d events from %s.';
+  SSkipped = '%d records were skipped. The first problem was: %s';
+  SConfirmClear = 'Delete all %d stored events?' + sLineBreak + 'This cannot be undone.';
 
 procedure TMainForm.FormCreate(Sender: TObject);
 begin
@@ -51,6 +62,7 @@ begin
         this form's. }
       FreeAndNil(FRepository);
       FreeAndNil(FDatabase);
+      ButtonImport.Enabled := False;
       StatusBar.SimpleText := SDatabaseUnavailable;
       MessageDlg(E.Message, mtError, [mbOK], 0);
       Exit;
@@ -75,9 +87,14 @@ begin
   ListViewEvents.Items.Count := Length(FVisible);
   ListViewEvents.Invalidate;
 
+  Stored := FRepository.Count;
+  { Clearing an empty history is a question with one answer, so the button is
+    not offered. This is the only place that decides, because it is the only
+    place that knows the count. }
+  ButtonClear.Enabled := Stored > 0;
+
   { The query is capped, so the window has to say when it is showing less than
     the database holds. Silence would read as "this is everything". }
-  Stored := FRepository.Count;
   if Stored > Length(FVisible) then
     StatusBar.SimpleText := Format(SShowingSome, [Length(FVisible), Stored])
   else
@@ -95,6 +112,63 @@ begin
   Item.SubItems.Add(TimeToText(Event.Time));
   Item.SubItems.Add(SeverityToStr(Event.Severity));
   Item.SubItems.Add(Event.Text);
+end;
+
+procedure TMainForm.ReportImport(const AFileName: string;
+  const AReport: TImportReport);
+var
+  Lines: TArray<string>;
+  Kind: TMsgDlgType;
+begin
+  Lines := [Format(SImportedFrom, [AReport.Accepted, AFileName])];
+  if AReport.Rejected > 0 then
+    Lines := Lines + [Format(SSkipped, [AReport.Rejected, AReport.FirstProblem])];
+
+  if (AReport.Rejected > 0) or (AReport.Accepted = 0) then
+    Kind := mtWarning
+  else
+    Kind := mtInformation;
+  MessageDlg(string.Join(sLineBreak, Lines), Kind, [mbOK], 0);
+end;
+
+procedure TMainForm.ButtonImportClick(Sender: TObject);
+var
+  Events: TArray<TLogEvent>;
+  Report: TImportReport;
+begin
+  if not OpenDialogJson.Execute then
+    Exit;
+  try
+    Events := LoadEventsFromFile(OpenDialogJson.FileName, Report);
+    FRepository.InsertMany(Events);
+  except
+    { An unusable file is the user's problem to fix, so it is reported and the
+      stored history is left as it was. }
+    on E: EEventImportError do
+    begin
+      MessageDlg(E.Message, mtError, [mbOK], 0);
+      Exit;
+    end;
+  end;
+  RefreshView;
+  ReportImport(OpenDialogJson.FileName, Report);
+end;
+
+procedure TMainForm.ButtonClearClick(Sender: TObject);
+var
+  Stored: Int64;
+begin
+  { The button is disabled when the history is empty, so this only guards
+    against a future path that mutates without refreshing. }
+  Stored := FRepository.Count;
+  if Stored = 0 then
+    Exit;
+  { Irreversible, so No is the default button rather than Yes. }
+  if MessageDlg(Format(SConfirmClear, [Stored]), mtWarning, [mbYes, mbNo], 0,
+    mbNo) <> mrYes then
+    Exit;
+  FRepository.DeleteAll;
+  RefreshView;
 end;
 
 end.

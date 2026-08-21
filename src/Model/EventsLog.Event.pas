@@ -34,14 +34,27 @@ function GuidToText(const AId: TGUID): string;
 function TryTextToGuid(const AValue: string; out AId: TGUID): Boolean;
 
 { ISO 8601 in local time, fixed width, so that ordering the text orders the
-  events (ADR 0006). }
+  events (ADR 0006). Reading goes through the RTL parser, which understands a Z
+  or an offset; writing does not emit either, so the stored form stays fixed
+  width and local. }
 function TimeToText(ATime: TDateTime): string;
-function TryTextToTime(const AValue: string; out ATime: TDateTime): Boolean;
+function TryTextToTime(const AValue: string; out ATime: TDateTime): Boolean; overload;
+function TryTextToTime(const AValue: string; out ATime: TDateTime;
+  out AProblem: Integer): Boolean; overload;
+{ Names the field TryTextToTime rejected, for a message worth reading. }
+function TimeProblemToStr(AProblem: Integer): string;
 
 implementation
 
 uses
   System.SysUtils, System.DateUtils;
+
+const
+  { The error codes TryISO8601ToDate reports, in its order. }
+  TimeProblemNames: array[1..9] of string = ('week', 'month', 'year', 'day',
+    'hour', 'minute', 'second', 'time zone', 'milliseconds');
+  { Anything the parser raises on rather than reports, which it has no code for. }
+  TimeProblemUnknown = 0;
 
 { TLogEvent }
 
@@ -88,6 +101,8 @@ function TryTextToGuid(const AValue: string; out AId: TGUID): Boolean;
 var
   Braced: string;
 begin
+  { The RTL has no Try variant for GUIDs, so the exception is the only signal
+    available and converting it here is the point of this function. }
   Braced := Trim(AValue);
   if (Braced <> '') and (Braced[1] <> '{') then
     Braced := '{' + Braced + '}';
@@ -104,29 +119,46 @@ function TimeToText(ATime: TDateTime): string;
 begin
   { Invariant settings on purpose: FormatDateTime substitutes the locale's time
     separator for ':', so the stored format would follow whatever machine wrote
-    the row. }
+    the row. DateToISO8601 is not used here because it always appends Z and
+    would declare a local time to be UTC. }
   Result := FormatDateTime(IsoTimeFormat, ATime, TFormatSettings.Invariant);
 end;
 
 function TryTextToTime(const AValue: string; out ATime: TDateTime): Boolean;
 var
-  Year, Month, Day, Hour, Minute, Second, Milliseconds: Integer;
+  Ignored: Integer;
 begin
-  Result := False;
-  if Length(AValue) < 19 then
-    Exit;
-  if not (TryStrToInt(Copy(AValue, 1, 4), Year)
-    and TryStrToInt(Copy(AValue, 6, 2), Month)
-    and TryStrToInt(Copy(AValue, 9, 2), Day)
-    and TryStrToInt(Copy(AValue, 12, 2), Hour)
-    and TryStrToInt(Copy(AValue, 15, 2), Minute)
-    and TryStrToInt(Copy(AValue, 18, 2), Second)) then
-    Exit;
-  Milliseconds := 0;
-  if (Length(AValue) >= 23) and not TryStrToInt(Copy(AValue, 21, 3), Milliseconds) then
-    Exit;
-  Result := TryEncodeDateTime(Year, Month, Day, Hour, Minute, Second,
-    Milliseconds, ATime);
+  Result := TryTextToTime(AValue, ATime, Ignored);
+end;
+
+function TryTextToTime(const AValue: string; out ATime: TDateTime;
+  out AProblem: Integer): Boolean;
+begin
+  { ioNoTZIsLocal is decision D3 spelled as an option: a string carrying no
+    offset is local time. A Z or an explicit offset is honoured and converted,
+    which a hand-rolled parser did neither of. }
+  try
+    Result := TryISO8601ToDate(AValue, ATime, AProblem, [ioNoTZIsLocal]);
+  except
+    { The RTL parser does not always honour its own Try contract: an offset like
+      +99:99 reaches EncodeTime and raises instead of reporting. Letting that
+      out would put the guard on every caller, and one caller is an import that
+      must survive a bad file. The code is left unknown rather than blamed on
+      the time zone, because nothing here proves that is the only path. }
+    on EConvertError do
+    begin
+      AProblem := TimeProblemUnknown;
+      Result := False;
+    end;
+  end;
+end;
+
+function TimeProblemToStr(AProblem: Integer): string;
+begin
+  if (AProblem >= Low(TimeProblemNames)) and (AProblem <= High(TimeProblemNames)) then
+    Result := TimeProblemNames[AProblem]
+  else
+    Result := 'format';
 end;
 
 end.
