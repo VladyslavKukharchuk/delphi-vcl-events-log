@@ -17,10 +17,26 @@ object MainForm: TMainForm
     Left = 0
     Top = 0
     Width = 1000
-    Height = 41
+    Height = 76
     Align = alTop
     BevelOuter = bvNone
     TabOrder = 0
+    object LabelSearch: TLabel
+      Left = 8
+      Top = 48
+      Width = 42
+      Height = 15
+      Caption = 'Search:'
+      FocusControl = EditSearch
+    end
+    object LabelSeverity: TLabel
+      Left = 480
+      Top = 48
+      Width = 48
+      Height = 15
+      Caption = 'Severity:'
+      FocusControl = ComboSeverity
+    end
     object ButtonImport: TButton
       Left = 8
       Top = 8
@@ -40,6 +56,24 @@ object MainForm: TMainForm
       TabOrder = 1
       OnClick = ButtonClearClick
     end
+    object EditSearch: TEdit
+      Left = 60
+      Top = 45
+      Width = 400
+      Height = 23
+      TabOrder = 2
+      TextHint = 'Part of the event text'
+      OnChange = FilterChange
+    end
+    object ComboSeverity: TComboBox
+      Left = 536
+      Top = 45
+      Width = 120
+      Height = 23
+      Style = csDropDownList
+      TabOrder = 3
+      OnChange = FilterChange
+    end
   end
   object StatusBar: TStatusBar
     Left = 0
@@ -51,9 +85,9 @@ object MainForm: TMainForm
   end
   object ListViewEvents: TListView
     Left = 0
-    Top = 41
+    Top = 76
     Width = 1000
-    Height = 501
+    Height = 466
     Align = alClient
     Columns = <
       item

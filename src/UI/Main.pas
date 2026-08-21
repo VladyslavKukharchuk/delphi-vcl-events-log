@@ -14,6 +14,10 @@ type
     PanelTop: TPanel;
     ButtonImport: TButton;
     ButtonClear: TButton;
+    LabelSearch: TLabel;
+    EditSearch: TEdit;
+    LabelSeverity: TLabel;
+    ComboSeverity: TComboBox;
     StatusBar: TStatusBar;
     ListViewEvents: TListView;
     OpenDialogJson: TOpenDialog;
@@ -22,6 +26,7 @@ type
     procedure ListViewEventsData(Sender: TObject; Item: TListItem);
     procedure ButtonImportClick(Sender: TObject);
     procedure ButtonClearClick(Sender: TObject);
+    procedure FilterChange(Sender: TObject);
   private
     FDatabase: TEventsDatabase;
     FRepository: TEventRepository;
@@ -29,6 +34,9 @@ type
     { The result of the current query. The list view is in virtual mode and
       reads this by index, so it is the only copy of what the user sees. }
     FVisible: TArray<TLogEvent>;
+    procedure FillSeverities;
+    function SelectedSeverities: TSeveritySet;
+    function ViewSummary(AStored, AMatching: Int64): string;
     procedure RefreshView;
     procedure ReportImport(const AFileName: string; const AReport: TImportReport);
   end;
@@ -40,10 +48,17 @@ implementation
 
 {$R *.dfm}
 
+const
+  { The entry in front of the severity names, standing for all of them. }
+  SeverityAllIndex = 0;
+
 resourcestring
   SDatabaseUnavailable = 'The event database is not available.';
+  SSeverityAll = 'All';
   SShowingSome = 'Showing the %d most recent of %d events';
   SShowingAll = '%d events';
+  SMatchingSome = 'Showing the %d most recent of %d matching events, %d stored';
+  SMatchingAll = '%d of %d events match the filter';
   SImportedFrom = 'Imported %d events from %s.';
   SSkipped = '%d records were skipped. The first problem was: %s';
   SConfirmClear = 'Delete all %d stored events?' + sLineBreak + 'This cannot be undone.';
@@ -51,6 +66,7 @@ resourcestring
 procedure TMainForm.FormCreate(Sender: TObject);
 begin
   FFilter := TEventFilter.Unfiltered;
+  FillSeverities;
   try
     FDatabase := TEventsDatabase.Create;
     FRepository := TEventRepository.Create(FDatabase);
@@ -63,6 +79,9 @@ begin
       FreeAndNil(FRepository);
       FreeAndNil(FDatabase);
       ButtonImport.Enabled := False;
+      { Nothing can be queried, so there is nothing to search or filter. }
+      EditSearch.Enabled := False;
+      ComboSeverity.Enabled := False;
       StatusBar.SimpleText := SDatabaseUnavailable;
       MessageDlg(E.Message, mtError, [mbOK], 0);
       Exit;
@@ -77,9 +96,60 @@ begin
   FDatabase.Free;
 end;
 
+{ The names come from the model rather than from the form designer, so adding a
+  severity level to the enumeration adds it to this list as well. }
+procedure TMainForm.FillSeverities;
+var
+  Severity: TEventSeverity;
+begin
+  ComboSeverity.Items.BeginUpdate;
+  try
+    ComboSeverity.Items.Clear;
+    ComboSeverity.Items.Add(SSeverityAll);
+    for Severity := Low(TEventSeverity) to High(TEventSeverity) do
+      ComboSeverity.Items.Add(SeverityToStr(Severity));
+  finally
+    ComboSeverity.Items.EndUpdate;
+  end;
+  ComboSeverity.ItemIndex := SeverityAllIndex;
+end;
+
+{ The list holds one severity per entry after the "All" one and in the order of
+  the enumeration, which is what FillSeverities put there. }
+function TMainForm.SelectedSeverities: TSeveritySet;
+begin
+  if ComboSeverity.ItemIndex <= SeverityAllIndex then
+    Exit(AllSeverities);
+  Result := [TEventSeverity(ComboSeverity.ItemIndex - 1)];
+end;
+
+procedure TMainForm.FilterChange(Sender: TObject);
+begin
+  FFilter := TEventFilter.Create(EditSearch.Text, SelectedSeverities);
+  RefreshView;
+end;
+
+{ The query is capped, so the window has to say when it is showing less than
+  what it could. Silence would read as "this is everything", and under a filter
+  so would a bare count: zero matches and an empty database look the same. }
+function TMainForm.ViewSummary(AStored, AMatching: Int64): string;
+begin
+  if FFilter.IsUnfiltered then
+  begin
+    if AStored > Length(FVisible) then
+      Result := Format(SShowingSome, [Length(FVisible), AStored])
+    else
+      Result := Format(SShowingAll, [AStored]);
+  end
+  else if AMatching > Length(FVisible) then
+    Result := Format(SMatchingSome, [Length(FVisible), AMatching, AStored])
+  else
+    Result := Format(SMatchingAll, [AMatching, AStored]);
+end;
+
 procedure TMainForm.RefreshView;
 var
-  Stored: Int64;
+  Stored, Matching: Int64;
 begin
   if FRepository = nil then
     Exit;
@@ -88,17 +158,18 @@ begin
   ListViewEvents.Invalidate;
 
   Stored := FRepository.Count;
+  { Counting twice would be counting the same rows twice when nothing is
+    filtered out. }
+  if FFilter.IsUnfiltered then
+    Matching := Stored
+  else
+    Matching := FRepository.Count(FFilter);
+
   { Clearing an empty history is a question with one answer, so the button is
     not offered. This is the only place that decides, because it is the only
     place that knows the count. }
   ButtonClear.Enabled := Stored > 0;
-
-  { The query is capped, so the window has to say when it is showing less than
-    the database holds. Silence would read as "this is everything". }
-  if Stored > Length(FVisible) then
-    StatusBar.SimpleText := Format(SShowingSome, [Length(FVisible), Stored])
-  else
-    StatusBar.SimpleText := Format(SShowingAll, [Stored]);
+  StatusBar.SimpleText := ViewSummary(Stored, Matching);
 end;
 
 procedure TMainForm.ListViewEventsData(Sender: TObject; Item: TListItem);
