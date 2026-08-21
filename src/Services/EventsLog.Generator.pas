@@ -85,14 +85,15 @@ end;
 constructor TEventGenerator.Create(const AOnProduced: TEventProducedProc;
   AInterval: Cardinal);
 begin
-  { Every field is in place before the thread exists, so Execute cannot reach
-    one that is not, and TerminatedSet cannot signal an event that has not been
-    created yet. Suspended and then started for the same reason. }
+  { Every field is assigned before inherited, because the OS thread is only
+    resumed once the last constructor in the chain has returned: Execute cannot
+    reach a field that is not there yet, and neither can TerminatedSet. Creating
+    it suspended and calling Start here would start it twice — AfterConstruction
+    starts what was not created suspended, and Start is what tells it apart. }
   FOnProduced := AOnProduced;
   FInterval := AInterval;
   FStopping := TEvent.Create(nil, True, False, '');
-  inherited Create(True);
-  Start;
+  inherited Create(False);
 end;
 
 destructor TEventGenerator.Destroy;
