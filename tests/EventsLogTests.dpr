@@ -23,8 +23,13 @@ begin
     Results := Runner.Execute;
     if not Results.AllPassed then
       ExitCode := 1;
-    Write('Done. Press Enter to close.');
-    Readln;
+    { Any argument means the run is not interactive, so do not block on Enter.
+      make test passes one; a double click from Explorer does not. }
+    if ParamCount = 0 then
+    begin
+      Write('Done. Press Enter to close.');
+      Readln;
+    end;
   except
     on E: Exception do
     begin

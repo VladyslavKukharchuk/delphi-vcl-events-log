@@ -11,7 +11,7 @@ Full statement: [docs/Test task Delphi Developer.docx](docs/Test%20task%20Delphi
 
 - RAD Studio 37.0 (`C:\Program Files (x86)\Embarcadero\Studio\37.0`), Personal edition.
 - `EventsLog.dproj`: `ProjectVersion 20.3`, `FrameworkType VCL`, platforms Win32 + Win64 (Win64 is the default).
-- Command-line build: `call "C:\Program Files (x86)\Embarcadero\Studio\37.0\bin\rsvars.bat"` then `msbuild EventsLog.dproj /t:Build /p:Config=Release /p:Platform=Win32`.
+- There is no command-line build: this edition refuses it, and both `msbuild` and `dcc64` answer "This version of the product does not support command line compiling". Building happens in the IDE.
 - Standard RTL/VCL plus FireDAC for data access, per [ADR 0004](docs/adr/0004-sqlite-for-local-persistence.md). No third-party components or packages. SQLite is linked statically through `FireDAC.Phys.SQLiteWrapper.Stat`, so the executable ships with no DLL beside it.
 
 ## Layout
@@ -34,7 +34,7 @@ The layer folders are the structure decided in [ADR 0001](docs/adr/0001-layer-fo
 - Dependencies point one way: `src/UI` → `src/Services` → `src/Repository` → `src/Model`. Nothing in `src/Model` may reference another layer, and no unit outside `src/UI` may use `Vcl.*` or show a dialog — errors travel out as results or exceptions.
 - A new layer folder also goes into the search path in `EventsLog.dproj` (`DCC_UnitSearchPath`, i.e. **Project → Options → Building → Delphi Compiler → Search path**).
 - Sample JSON data lives in `tests/` next to the tests that use it as fixtures (`sample-events.json`, plus one file with broken records and one that is not JSON). It is part of the assignment deliverables as well as of the test suite.
-- Tests are DUnitX, built from `tests/EventsLogTests.dproj` and run from the IDE. Personal edition refuses command-line compiling, so there is no CI and no `msbuild` path for them.
+- Tests are DUnitX, built from `tests/EventsLogTests.dproj` in the IDE. Running them needs no IDE: `make test` executes the built binary and its exit code reports pass or fail. The `Makefile` deliberately has no build target, for the reason above, so there is no CI path either.
 
 ## Delphi code
 
