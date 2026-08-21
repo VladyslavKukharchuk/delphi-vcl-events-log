@@ -56,12 +56,21 @@ object MainForm: TMainForm
       TabOrder = 1
       OnClick = ButtonClearClick
     end
+    object ButtonGenerate: TButton
+      Left = 284
+      Top = 8
+      Width = 130
+      Height = 25
+      Caption = 'Start generating'
+      TabOrder = 2
+      OnClick = ButtonGenerateClick
+    end
     object EditSearch: TEdit
       Left = 60
       Top = 45
       Width = 400
       Height = 23
-      TabOrder = 2
+      TabOrder = 3
       TextHint = 'Part of the event text'
       OnChange = FilterChange
     end
@@ -71,7 +80,7 @@ object MainForm: TMainForm
       Width = 120
       Height = 23
       Style = csDropDownList
-      TabOrder = 3
+      TabOrder = 4
       OnChange = FilterChange
     end
   end
@@ -118,6 +127,13 @@ object MainForm: TMainForm
     Options = [ofHideReadOnly, ofPathMustExist, ofFileMustExist, ofEnableSizing]
     Title = 'Import events'
     Left = 8
+    Top = 48
+  end
+  object TimerRefresh: TTimer
+    Enabled = False
+    Interval = 250
+    OnTimer = TimerRefreshTimer
+    Left = 64
     Top = 48
   end
 end

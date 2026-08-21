@@ -11,7 +11,8 @@ uses
   EventsLog.Filter in 'src\Model\EventsLog.Filter.pas',
   EventsLog.Database in 'src\Repository\EventsLog.Database.pas',
   EventsLog.EventRepository in 'src\Repository\EventsLog.EventRepository.pas',
-  EventsLog.Json in 'src\Repository\EventsLog.Json.pas';
+  EventsLog.Json in 'src\Repository\EventsLog.Json.pas',
+  EventsLog.Generator in 'src\Services\EventsLog.Generator.pas';
 
 {$R *.res}
 
