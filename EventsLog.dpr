@@ -2,7 +2,7 @@ program EventsLog;
 
 uses
   Vcl.Forms,
-  DelphiVCLEventsLog in '..\Embarcadero\Studio\Projects\DelphiVCLEventsLog.pas' {MainForm};
+  Main in 'Main.pas' {MainForm};
 
 {$R *.res}
 

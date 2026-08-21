@@ -17,3 +17,5 @@ __recovery/
 *.~*
 *.dsk
 
+# Compiled resources (regenerated from the .dproj on build)
+*.res
