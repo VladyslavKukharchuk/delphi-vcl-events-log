@@ -12,14 +12,14 @@ Full statement: [docs/Test task Delphi Developer.docx](docs/Test%20task%20Delphi
 - RAD Studio 37.0 (`C:\Program Files (x86)\Embarcadero\Studio\37.0`), Personal edition.
 - `EventsLog.dproj`: `ProjectVersion 20.3`, `FrameworkType VCL`, platforms Win32 + Win64 (Win64 is the default).
 - Command-line build: `call "C:\Program Files (x86)\Embarcadero\Studio\37.0\bin\rsvars.bat"` then `msbuild EventsLog.dproj /t:Build /p:Config=Release /p:Platform=Win32`.
-- Standard RTL/VCL only. No third-party components or packages.
+- Standard RTL/VCL plus FireDAC for data access, per [ADR 0004](docs/adr/0004-sqlite-for-local-persistence.md). No third-party components or packages. SQLite is linked statically through `FireDAC.Phys.SQLiteWrapper.Stat`, so the executable ships with no DLL beside it.
 
 ## Layout
 
 ```
 EventsLog.dpr      entry point and composition root
 src/Model/         entities, event store, filtering — knows about neither VCL nor JSON
-src/Repository/    file adapters (JSON import)
+src/Repository/    data access — JSON import and the SQLite store
 src/Services/      background work (event generator)
 src/UI/            Main.pas / .dfm — the form and its wiring
 docs/              assignment statement and supporting documents
@@ -39,6 +39,7 @@ The layer folders are the structure decided in [ADR 0001](docs/adr/0001-layer-fo
 - Embarcadero style: `PascalCase` for types (`TLogEvent`), `T` prefix for types and `I` for interfaces, `F` prefix for fields, 2-space indentation, `begin` on its own line.
 - One unit, one responsibility: data model, JSON handling, event generator and the form never share a file.
 - The form (`src/UI/Main.pas`) only owns UI and wiring; business logic lives in separate units and knows nothing about visual controls.
+- No `TDataSet` leaves `src/Repository`: a query turns rows into `TLogEvent` values before returning them, so no dataset reaches the model or the form.
 - JSON goes through `System.JSON`. Parsing is always guarded: a malformed file or broken fields produce a clear message for the user instead of a raw `EJSONException`.
 - Use `try..except` only where the error can actually be handled. Never silence exceptions with an empty `except end`.
 - Release resources with `try..finally`; make ownership explicit (`TObjectList<T>` with `OwnsObjects`).
