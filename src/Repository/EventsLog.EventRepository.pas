@@ -63,8 +63,9 @@ begin
   Result := '%' + Result + '%';
 end;
 
-{ The severity list is interpolated rather than parametrised: the values come
-  from SeverityNames, a compile-time constant, and never from user input. }
+{ SQL has no list parameter, so the severity list reaches the query as a macro:
+  &severities is raw text substitution, safe only because the values come from
+  SeverityNames, a compile-time constant, and never from user input. }
 function SeverityList(ASeverities: TSeveritySet): string;
 var
   Severity: TEventSeverity;
@@ -87,19 +88,21 @@ begin
   if AFilter.SearchText <> '' then
     Conditions := Conditions + ['text like :pattern escape ''\'''];
   if AFilter.Severities <> AllSeverities then
-    Conditions := Conditions +
-      ['severity in (' + SeverityList(AFilter.Severities) + ')'];
+    Conditions := Conditions + ['severity in (&severities)'];
   if Length(Conditions) = 0 then
     Exit('');
   Result := ' where ' + string.Join(' and ', Conditions);
 end;
 
-{ The pattern is the only parameter WhereClause leaves open: the severity list
-  is already part of its text. }
+{ Fills in what WhereClause left open, branching on the same two conditions the
+  clause itself branched on: the pattern as a parameter, the severity list as a
+  macro. Asking for either one the clause did not emit would raise. }
 procedure BindFilter(ACursor: TFDQuery; const AFilter: TEventFilter);
 begin
   if AFilter.SearchText <> '' then
     ACursor.ParamByName('pattern').AsString := LikePattern(AFilter.SearchText);
+  if AFilter.Severities <> AllSeverities then
+    ACursor.MacroByName('severities').AsRaw := SeverityList(AFilter.Severities);
 end;
 
 function RowToEvent(ACursor: TFDQuery): TLogEvent;
