@@ -23,6 +23,8 @@ help:
 
 test:
 	@if not exist $(TESTS_EXE) (echo Not built: $(TESTS_EXE)& echo Open $(TESTS_PROJECT) in the IDE and press Ctrl+F9 first.& exit /b 1)
+	@echo Running the binary as it is. If a source changed since it was built,
+	@echo rebuild in the IDE first - make cannot do it in this edition.
 	@$(TESTS_EXE) --no-pause
 
 test-pause:
