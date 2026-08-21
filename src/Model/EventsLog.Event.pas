@@ -53,6 +53,8 @@ const
   { The error codes TryISO8601ToDate reports, in its order. }
   TimeProblemNames: array[1..9] of string = ('week', 'month', 'year', 'day',
     'hour', 'minute', 'second', 'time zone', 'milliseconds');
+  { Anything the parser raises on rather than reports, which it has no code for. }
+  TimeProblemUnknown = 0;
 
 { TLogEvent }
 
@@ -135,7 +137,20 @@ begin
   { ioNoTZIsLocal is decision D3 spelled as an option: a string carrying no
     offset is local time. A Z or an explicit offset is honoured and converted,
     which a hand-rolled parser did neither of. }
-  Result := TryISO8601ToDate(AValue, ATime, AProblem, [ioNoTZIsLocal]);
+  try
+    Result := TryISO8601ToDate(AValue, ATime, AProblem, [ioNoTZIsLocal]);
+  except
+    { The RTL parser does not always honour its own Try contract: an offset like
+      +99:99 reaches EncodeTime and raises instead of reporting. Letting that
+      out would put the guard on every caller, and one caller is an import that
+      must survive a bad file. The code is left unknown rather than blamed on
+      the time zone, because nothing here proves that is the only path. }
+    on EConvertError do
+    begin
+      AProblem := TimeProblemUnknown;
+      Result := False;
+    end;
+  end;
 end;
 
 function TimeProblemToStr(AProblem: Integer): string;
