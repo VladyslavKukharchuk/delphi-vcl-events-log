@@ -2,7 +2,8 @@ program EventsLog;
 
 uses
   Vcl.Forms,
-  Main in 'src\UI\Main.pas' {MainForm};
+  Main in 'src\UI\Main.pas' {MainForm},
+  EventsLog.Event in 'src\Model\EventsLog.Event.pas';
 
 {$R *.res}
 
