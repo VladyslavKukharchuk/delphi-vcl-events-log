@@ -1,0 +1,5 @@
+[
+  {
+    "time": "2026-08-20T11:00:00.000",
+    "text": "The array is never closed, so the file is not valid JSON",
+    "severity": "Info"

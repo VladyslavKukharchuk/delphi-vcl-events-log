@@ -1,0 +1,12 @@
+[
+  { "time": "2026-08-19T08:14:02.000", "text": "Application started", "severity": "Info" },
+  { "time": "2026-08-19T08:14:03.145", "text": "Configuration loaded from disk", "severity": "Info" },
+  { "time": "2026-08-19T09:02:47.880", "text": "Disk space on volume C is below 15 per cent", "severity": "Warning" },
+  { "time": "2026-08-19T09:31:12.004", "text": "Scheduled backup skipped: previous run still active", "severity": "Warning" },
+  { "time": "2026-08-19T11:47:55.512", "text": "Connection to the reporting service timed out after 30 s", "severity": "Error" },
+  { "time": "2026-08-19T11:48:01.037", "text": "Retrying connection to the reporting service (attempt 2 of 5)", "severity": "Info" },
+  { "time": "2026-08-20T07:05:19.260", "text": "User session expired and was closed", "severity": "info" },
+  { "time": "2026-08-20T14:22:08.918", "text": "Unhandled exception in the export worker: access violation", "severity": "ERROR" },
+  { "time": "2026-08-20T14:22:09.031", "text": "Export worker restarted", "severity": "Warning" },
+  { "time": "2026-08-20T16:40:33.601", "text": "Application stopped by the user", "severity": "Info" }
+]

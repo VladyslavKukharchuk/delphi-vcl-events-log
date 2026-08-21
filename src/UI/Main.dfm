@@ -13,6 +13,24 @@ object MainForm: TMainForm
   OnCreate = FormCreate
   OnDestroy = FormDestroy
   TextHeight = 15
+  object PanelTop: TPanel
+    Left = 0
+    Top = 0
+    Width = 1000
+    Height = 41
+    Align = alTop
+    BevelOuter = bvNone
+    TabOrder = 0
+    object ButtonImport: TButton
+      Left = 8
+      Top = 8
+      Width = 130
+      Height = 25
+      Caption = 'Import JSON...'
+      TabOrder = 0
+      OnClick = ButtonImportClick
+    end
+  end
   object StatusBar: TStatusBar
     Left = 0
     Top = 542
@@ -23,9 +41,9 @@ object MainForm: TMainForm
   end
   object ListViewEvents: TListView
     Left = 0
-    Top = 0
+    Top = 41
     Width = 1000
-    Height = 542
+    Height = 501
     Align = alClient
     Columns = <
       item
@@ -47,8 +65,15 @@ object MainForm: TMainForm
     OwnerData = True
     ReadOnly = True
     RowSelect = True
-    TabOrder = 1
+    TabOrder = 2
     ViewStyle = vsReport
     OnData = ListViewEventsData
+  end
+  object OpenDialogJson: TOpenDialog
+    Filter = 'JSON files (*.json)|*.json|All files (*.*)|*.*'
+    Options = [ofHideReadOnly, ofPathMustExist, ofFileMustExist, ofEnableSizing]
+    Title = 'Import events'
+    Left = 8
+    Top = 48
   end
 end

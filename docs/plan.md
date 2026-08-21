@@ -12,15 +12,15 @@ Every requirement below comes straight from the statement.
 
 - [ ] **R1** — An event carries an ID, a timestamp, text and a severity level (Info / Warning / Error) · *model*
 - [x] **R2** — Main window shows the events in a table, with every attribute visible · *UI*
-- [ ] **R3** — Event history loads from a JSON file · *feature*
-- [ ] **R4** — Malformed files and invalid data never crash the application · *quality*
+- [x] **R3** — Event history loads from a JSON file · *feature*
+- [x] **R4** — Malformed files and invalid data never crash the application · *quality*
 - [ ] **R5** — Search events by their text · *feature*
 - [ ] **R6** — Filter events by severity level · *feature*
 - [ ] **R7** — The generator can be switched on and off · *UI*
 - [ ] **R8** — While on, one random event is appended to the shared list every second · *feature*
 - [ ] **R9** — Generation runs on a background thread and never blocks the UI · *quality*
 - [ ] **R10** — Deliverable: project sources plus the built executable · *deliverable*
-- [ ] **R11** — Deliverable: a JSON file with test data · *deliverable*
+- [x] **R11** — Deliverable: a JSON file with test data · *deliverable*
 - [ ] **R12** — Deliverable: README stating the Delphi version, the program structure and what could be improved with more time · *deliverable*
 
 ## Beyond the statement
@@ -44,9 +44,11 @@ recorded in an ADR.
 - [x] **D1 — who issues IDs** — identifiers are UUIDs minted by whoever creates the event, so
       there is no counter and no coordination between imported and generated events. Recorded in
       [ADR 0003](adr/0003-uuid-event-identifiers.md).
-- [ ] **D2 — import replaces or appends** — replaces, asking for confirmation when the list is
-      not empty. "Event history" reads as loading a state rather than adding to one. With
-      persistence, "replaces" also means deleting the stored rows, not only the in-memory list.
+- [x] **D2 — import replaces or appends** — appends. The store is a log that grows from two
+      directions, the generator over time and each import, so replacement would discard what the
+      generator recorded. Identifiers are minted on import rather than read from the file, so
+      re-importing the same file stores its events twice.
+      [ADR 0009](adr/0009-json-import-semantics.md).
 - [x] **D3 — timestamp format in JSON** — ISO 8601 (`2026-08-21T07:43:12.160`),
       fixed width and local time, shared with the database column. Recorded in
       [ADR 0006](adr/0006-database-schema-and-encodings.md); `TimeToText` / `TryTextToTime` implement it.
