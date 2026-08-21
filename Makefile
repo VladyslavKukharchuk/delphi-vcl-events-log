@@ -20,7 +20,11 @@ help:
 	@echo   make clean       delete the build output of both projects
 	@echo.
 	@echo Building is not available from a console in this edition.
-	@echo Open $(TESTS_PROJECT) in the IDE and press Ctrl+F9.
+	@echo Open $(TESTS_PROJECT) in the IDE and press Shift+F9 (Build).
+	@echo.
+	@echo A run started from the IDE waits on Enter and keeps the exe locked,
+	@echo so close that console before rebuilding or the build fails with F2039.
+	@echo make test does not pause, so it never leaves the file locked.
 
 test:
 	@if not exist $(TESTS_EXE) (echo Not built: $(TESTS_EXE)& echo Open $(TESTS_PROJECT) in the IDE and press Ctrl+F9 first.& exit /b 1)
