@@ -24,6 +24,7 @@ type
 
 const
   SeverityNames: array[TEventSeverity] of string = ('Info', 'Warning', 'Error');
+  IsoTimeFormat = 'yyyy-mm-dd"T"hh:nn:ss.zzz';
 
 function SeverityToStr(ASeverity: TEventSeverity): string;
 function TryStrToSeverity(const AValue: string; out ASeverity: TEventSeverity): Boolean;
@@ -32,10 +33,15 @@ function TryStrToSeverity(const AValue: string; out ASeverity: TEventSeverity): 
 function GuidToText(const AId: TGUID): string;
 function TryTextToGuid(const AValue: string; out AId: TGUID): Boolean;
 
+{ ISO 8601 in local time, fixed width, so that ordering the text orders the
+  events (ADR 0006). }
+function TimeToText(ATime: TDateTime): string;
+function TryTextToTime(const AValue: string; out ATime: TDateTime): Boolean;
+
 implementation
 
 uses
-  System.SysUtils;
+  System.SysUtils, System.DateUtils;
 
 { TLogEvent }
 
@@ -92,6 +98,35 @@ begin
     on EConvertError do
       Result := False;
   end;
+end;
+
+function TimeToText(ATime: TDateTime): string;
+begin
+  { Invariant settings on purpose: FormatDateTime substitutes the locale's time
+    separator for ':', so the stored format would follow whatever machine wrote
+    the row. }
+  Result := FormatDateTime(IsoTimeFormat, ATime, TFormatSettings.Invariant);
+end;
+
+function TryTextToTime(const AValue: string; out ATime: TDateTime): Boolean;
+var
+  Year, Month, Day, Hour, Minute, Second, Milliseconds: Integer;
+begin
+  Result := False;
+  if Length(AValue) < 19 then
+    Exit;
+  if not (TryStrToInt(Copy(AValue, 1, 4), Year)
+    and TryStrToInt(Copy(AValue, 6, 2), Month)
+    and TryStrToInt(Copy(AValue, 9, 2), Day)
+    and TryStrToInt(Copy(AValue, 12, 2), Hour)
+    and TryStrToInt(Copy(AValue, 15, 2), Minute)
+    and TryStrToInt(Copy(AValue, 18, 2), Second)) then
+    Exit;
+  Milliseconds := 0;
+  if (Length(AValue) >= 23) and not TryStrToInt(Copy(AValue, 21, 3), Milliseconds) then
+    Exit;
+  Result := TryEncodeDateTime(Year, Month, Day, Hour, Minute, Second,
+    Milliseconds, ATime);
 end;
 
 end.

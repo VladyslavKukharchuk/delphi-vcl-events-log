@@ -44,7 +44,7 @@ The layer folders are the structure decided in [ADR 0001](docs/adr/0001-layer-fo
 - Use `try..except` only where the error can actually be handled. Never silence exceptions with an empty `except end`.
 - Release resources with `try..finally`; make ownership explicit (`TObjectList<T>` with `OwnsObjects`).
 - Background work uses `TThread` (a descendant or `TThread.CreateAnonymousThread`). UI updates happen only via `TThread.Queue` / `Synchronize`. No `Application.ProcessMessages` as a substitute for a thread, and no busy waiting — pause with `TEvent.WaitFor` so shutdown is immediate.
-- Guard the shared event list with a lock (`TCriticalSection` / `TMonitor`) while background generation is running.
+- There is no shared event list to guard: the generator builds an event on its own thread and hands it to the UI thread with `TThread.Queue`, and only that thread writes to the database or to the array behind the table ([ADR 0007](docs/adr/0007-event-repository.md)). If a design ever does share mutable state between threads, guard it with a lock (`TCriticalSection` / `TMonitor`).
 - Comments only where the code does not explain itself.
 
 ## Documentation
