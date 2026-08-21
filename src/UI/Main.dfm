@@ -30,6 +30,16 @@ object MainForm: TMainForm
       TabOrder = 0
       OnClick = ButtonImportClick
     end
+    object ButtonClear: TButton
+      Left = 146
+      Top = 8
+      Width = 130
+      Height = 25
+      Caption = 'Clear all events'
+      Enabled = False
+      TabOrder = 1
+      OnClick = ButtonClearClick
+    end
   end
   object StatusBar: TStatusBar
     Left = 0

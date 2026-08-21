@@ -26,6 +26,9 @@ type
     { Import appends. The inserts share one explicit transaction, because a file
       can hold thousands of rows (ADR 0009). }
     procedure InsertMany(const AEvents: TArray<TLogEvent>);
+    { The only path in the application that removes events, and it removes all
+      of them. There is no per-event delete because nothing asks for one. }
+    procedure DeleteAll;
     function Query(const AFilter: TEventFilter;
       ALimit: Integer = DefaultQueryLimit): TArray<TLogEvent>;
     function Count: Int64;
@@ -40,6 +43,7 @@ uses
 const
   SqlInsert = 'insert into events (id, time, text, severity) ' +
     'values (:id, :time, :text, :severity)';
+  SqlDeleteAll = 'delete from events';
   SqlSelect = 'select id, time, text, severity from events';
   SqlCount = 'select count(*) from events';
 
@@ -174,6 +178,11 @@ begin
   finally
     Cursor.Free;
   end;
+end;
+
+procedure TEventRepository.DeleteAll;
+begin
+  FDatabase.Connection.ExecSQL(SqlDeleteAll);
 end;
 
 function TEventRepository.Count: Int64;

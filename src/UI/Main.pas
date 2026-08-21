@@ -13,6 +13,7 @@ type
   TMainForm = class(TForm)
     PanelTop: TPanel;
     ButtonImport: TButton;
+    ButtonClear: TButton;
     StatusBar: TStatusBar;
     ListViewEvents: TListView;
     OpenDialogJson: TOpenDialog;
@@ -20,6 +21,7 @@ type
     procedure FormDestroy(Sender: TObject);
     procedure ListViewEventsData(Sender: TObject; Item: TListItem);
     procedure ButtonImportClick(Sender: TObject);
+    procedure ButtonClearClick(Sender: TObject);
   private
     FDatabase: TEventsDatabase;
     FRepository: TEventRepository;
@@ -44,6 +46,7 @@ resourcestring
   SShowingAll = '%d events';
   SImportedFrom = 'Imported %d events from %s.';
   SSkipped = '%d records were skipped. The first problem was: %s';
+  SConfirmClear = 'Delete all %d stored events?' + sLineBreak + 'This cannot be undone.';
 
 procedure TMainForm.FormCreate(Sender: TObject);
 begin
@@ -84,9 +87,14 @@ begin
   ListViewEvents.Items.Count := Length(FVisible);
   ListViewEvents.Invalidate;
 
+  Stored := FRepository.Count;
+  { Clearing an empty history is a question with one answer, so the button is
+    not offered. This is the only place that decides, because it is the only
+    place that knows the count. }
+  ButtonClear.Enabled := Stored > 0;
+
   { The query is capped, so the window has to say when it is showing less than
     the database holds. Silence would read as "this is everything". }
-  Stored := FRepository.Count;
   if Stored > Length(FVisible) then
     StatusBar.SimpleText := Format(SShowingSome, [Length(FVisible), Stored])
   else
@@ -144,6 +152,23 @@ begin
   end;
   RefreshView;
   ReportImport(OpenDialogJson.FileName, Report);
+end;
+
+procedure TMainForm.ButtonClearClick(Sender: TObject);
+var
+  Stored: Int64;
+begin
+  { The button is disabled when the history is empty, so this only guards
+    against a future path that mutates without refreshing. }
+  Stored := FRepository.Count;
+  if Stored = 0 then
+    Exit;
+  { Irreversible, so No is the default button rather than Yes. }
+  if MessageDlg(Format(SConfirmClear, [Stored]), mtWarning, [mbYes, mbNo], 0,
+    mbNo) <> mrYes then
+    Exit;
+  FRepository.DeleteAll;
+  RefreshView;
 end;
 
 end.

@@ -34,6 +34,8 @@ in the ADRs rather than smuggled in:
       over an array · *feature*
 - [ ] **P3** — the README states where the database file lives and that deleting that folder resets
       the application to empty · *deliverable*
+- [ ] **P4** — the window can clear the stored history, since nothing else in the application removes
+      events ([ADR 0009](adr/0009-json-import-semantics.md)) · *feature*
 
 ## Open decisions
 

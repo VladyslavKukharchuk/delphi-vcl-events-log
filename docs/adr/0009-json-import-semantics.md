@@ -147,6 +147,12 @@ sameness — probably the triple of time, text and severity — and would turn t
 against a unique index rather than the primary key; files large enough that holding the DOM matters;
 or a requirement to report every problem rather than the first.
 
-The consequence to watch: nothing removes events any more. The database only grows, and the only route
-back to empty is deleting the file named in ADR 0005. That belongs in the README beside the path rather
-than being left for a user to work out.
+Append made one absence conspicuous immediately: with nothing in the application removing events, the
+only route back to empty would have been deleting the file named in ADR 0005. So the window carries a
+button that clears the history, behind a confirmation whose default answer is No. It is deliberately
+all-or-nothing — `DeleteAll` and nothing finer — because per-event deletion is a different feature with
+its own questions about selection and undo, and nothing has asked for it.
+
+The consequence to watch: clearing is the one irreversible action in the application, and it sits next
+to Import on the same toolbar. The confirmation names the count and defaults to No for that reason,
+which is protection by a single click and no more than that.
