@@ -17,20 +17,28 @@ Full statement: [docs/Test task Delphi Developer.docx](docs/Test%20task%20Delphi
 ## Layout
 
 ```
-EventsLog.dpr      entry point
-Main.pas / .dfm    main form
+EventsLog.dpr      entry point and composition root
+src/Model/         entities, event store, filtering — knows about neither VCL nor JSON
+src/Repository/    file adapters (JSON import)
+src/Services/      background work (event generator)
+src/UI/            Main.pas / .dfm — the form and its wiring
 docs/              assignment statement and supporting documents
 docs/adr/          architecture decision records
 ```
 
-- New units go next to `Main.pas` in the project root and must be added to the `.dpr` `uses` clause **with a relative path inside the repository**.
+The layer folders are the structure decided in [ADR 0001](docs/adr/0001-layer-folders-under-src.md).
+
+- Unit names stay short — `EventsLog.Store.pas`, not `EventsLog.Model.Store.pas`. The folder carries the layer, the name carries the role.
+- A new unit goes into the folder of its layer and is added to the `.dpr` `uses` clause **with a relative path inside the repository**: `EventsLog.Store in 'src\Model\EventsLog.Store.pas'`.
+- Dependencies point one way: `src/UI` → `src/Services` → `src/Repository` → `src/Model`. Nothing in `src/Model` may reference another layer, and no unit outside `src/UI` may use `Vcl.*` or show a dialog — errors travel out as results or exceptions.
+- A new layer folder also goes into the search path in `EventsLog.dproj` (`DCC_UnitSearchPath`, i.e. **Project → Options → Building → Delphi Compiler → Search path**).
 - Sample JSON data is kept in the repository (e.g. `sample-events.json`) — it is part of the assignment deliverables.
 
 ## Delphi code
 
 - Embarcadero style: `PascalCase` for types (`TLogEvent`), `T` prefix for types and `I` for interfaces, `F` prefix for fields, 2-space indentation, `begin` on its own line.
 - One unit, one responsibility: data model, JSON handling, event generator and the form never share a file.
-- The form (`Main.pas`) only owns UI and wiring; business logic lives in separate units and knows nothing about visual controls.
+- The form (`src/UI/Main.pas`) only owns UI and wiring; business logic lives in separate units and knows nothing about visual controls.
 - JSON goes through `System.JSON`. Parsing is always guarded: a malformed file or broken fields produce a clear message for the user instead of a raw `EJSONException`.
 - Use `try..except` only where the error can actually be handled. Never silence exceptions with an empty `except end`.
 - Release resources with `try..finally`; make ownership explicit (`TObjectList<T>` with `OwnsObjects`).
