@@ -36,6 +36,9 @@ in the ADRs rather than smuggled in:
       the application to empty · *deliverable*
 - [ ] **P4** — the window can clear the stored history, since nothing else in the application removes
       events ([ADR 0009](adr/0009-json-import-semantics.md)) · *feature*
+- [ ] **P5** — the JSON validation is covered by DUnitX table tests, using the sample files as
+      fixtures. Runnable from the IDE only, since Personal edition refuses command-line compiling ·
+      *quality*
 
 ## Open decisions
 
@@ -86,8 +89,8 @@ recorded in an ADR.
 Not asked for by the statement and not wanted for this project either, so deliberately not built. These belong in the README section
 about what could be improved with more time:
 
-- Unit tests.
+- Unit tests beyond the JSON validation covered by P5 - the repository and the form have none.
 - Saving the list back to JSON.
-- Editing or deleting events.
+- Editing an event, or deleting one event rather than all of them (P4 clears everything or nothing).
 - Sorting by column.
 - Persisting window state, filters or the last opened file.
