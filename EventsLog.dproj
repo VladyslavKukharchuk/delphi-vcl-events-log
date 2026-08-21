@@ -133,6 +133,7 @@
         <DCCReference Include="src\Repository\EventsLog.Database.pas"/>
         <DCCReference Include="src\Repository\EventsLog.EventRepository.pas"/>
         <DCCReference Include="src\Repository\EventsLog.Json.pas"/>
+        <DCCReference Include="src\Services\EventsLog.Generator.pas"/>
         <BuildConfiguration Include="Base">
             <Key>Base</Key>
         </BuildConfiguration>

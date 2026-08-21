@@ -16,9 +16,9 @@ Every requirement below comes straight from the statement.
 - [x] **R4** — Malformed files and invalid data never crash the application · *quality*
 - [x] **R5** — Search events by their text · *feature*
 - [x] **R6** — Filter events by severity level · *feature*
-- [ ] **R7** — The generator can be switched on and off · *UI*
-- [ ] **R8** — While on, one random event is appended to the shared list every second · *feature*
-- [ ] **R9** — Generation runs on a background thread and never blocks the UI · *quality*
+- [x] **R7** — The generator can be switched on and off · *UI*
+- [x] **R8** — While on, one random event is appended to the shared list every second · *feature*
+- [x] **R9** — Generation runs on a background thread and never blocks the UI · *quality*
 - [ ] **R10** — Deliverable: project sources plus the built executable · *deliverable*
 - [x] **R11** — Deliverable: a JSON file with test data · *deliverable*
 - [ ] **R12** — Deliverable: README stating the Delphi version, the program structure and what could be improved with more time · *deliverable*
@@ -60,8 +60,10 @@ recorded in an ADR.
 - [x] **D4 — severity in JSON** — a case-insensitive string; an unknown value makes the record
       invalid (skipped and reported) instead of silently becoming Info. `TryStrToSeverity` compares
       against `SeverityNames` with `SameText`.
-- [ ] **D5 — auto-scroll while generating** — no forced scrolling, otherwise the list cannot be
-      read while events keep arriving.
+- [x] **D5 — auto-scroll while generating** — none, and the ordering makes it moot: the query is
+      `order by time desc`, so a new event appears at the top, which is where the list already is.
+      Forced scrolling would take away the position the reader chose once a second.
+      [ADR 0011](adr/0011-event-generator-thread.md).
 - [ ] **D6 — executable bitness for delivery** — ship both Win32 and Win64 in the release.
 - [x] **D7 — how the identifier is displayed** — in full. A truncated UUID is shorter but cannot be
       copied, compared or pasted into a query, and the statement asks for the attributes to be shown

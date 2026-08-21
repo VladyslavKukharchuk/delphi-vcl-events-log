@@ -7,13 +7,14 @@ uses
   Vcl.Graphics, Vcl.Controls, Vcl.Forms, Vcl.Dialogs, Vcl.ComCtrls, Vcl.ExtCtrls,
   Vcl.StdCtrls,
   EventsLog.Event, EventsLog.Filter, EventsLog.Database,
-  EventsLog.EventRepository, EventsLog.Json;
+  EventsLog.EventRepository, EventsLog.Json, EventsLog.Generator;
 
 type
   TMainForm = class(TForm)
     PanelTop: TPanel;
     ButtonImport: TButton;
     ButtonClear: TButton;
+    ButtonGenerate: TButton;
     LabelSearch: TLabel;
     EditSearch: TEdit;
     LabelSeverity: TLabel;
@@ -21,16 +22,28 @@ type
     StatusBar: TStatusBar;
     ListViewEvents: TListView;
     OpenDialogJson: TOpenDialog;
+    TimerRefresh: TTimer;
     procedure FormCreate(Sender: TObject);
     procedure FormDestroy(Sender: TObject);
     procedure ListViewEventsData(Sender: TObject; Item: TListItem);
     procedure ButtonImportClick(Sender: TObject);
     procedure ButtonClearClick(Sender: TObject);
     procedure FilterChange(Sender: TObject);
+    procedure ButtonGenerateClick(Sender: TObject);
+    procedure TimerRefreshTimer(Sender: TObject);
   private
     FDatabase: TEventsDatabase;
     FRepository: TEventRepository;
     FFilter: TEventFilter;
+    { Nil exactly when the generator is off, so the button has no second copy
+      of that state to keep in step. }
+    FGenerator: TEventGenerator;
+    { Set by an arriving event, cleared by the refresh that shows it. The
+      refresh costs a query, so a burst is coalesced into one (ADR 0007). }
+    FViewStale: Boolean;
+    { Why the last generated event could not be stored, empty when nothing has
+      failed. The timer reads it, because the callback that sets it cannot. }
+    FGeneratorProblem: string;
     { The result of the current query. The list view is in virtual mode and
       reads this by index, so it is the only copy of what the user sees. }
     FVisible: TArray<TLogEvent>;
@@ -38,6 +51,9 @@ type
     function SelectedSeverities: TSeveritySet;
     function ViewSummary(AStored, AMatching: Int64): string;
     procedure RefreshView;
+    procedure StartGenerating;
+    procedure StopGenerating;
+    procedure GeneratedEventArrived(const AEvent: TLogEvent);
     procedure ReportImport(const AFileName: string; const AReport: TImportReport);
   end;
 
@@ -54,6 +70,10 @@ const
 
 resourcestring
   SDatabaseUnavailable = 'The event database is not available.';
+  SStartGenerating = 'Start generating';
+  SStopGenerating = 'Stop generating';
+  SGeneratorFailed = 'Generating was stopped, because the event could not be ' +
+    'stored:' + sLineBreak + '%s';
   SSeverityAll = 'All';
   SShowingSome = 'Showing the %d most recent of %d events';
   SShowingAll = '%d events';
@@ -79,6 +99,8 @@ begin
       FreeAndNil(FRepository);
       FreeAndNil(FDatabase);
       ButtonImport.Enabled := False;
+      { Nothing can be stored, so there is nothing to generate either. }
+      ButtonGenerate.Enabled := False;
       { Nothing can be queried, so there is nothing to search or filter. }
       EditSearch.Enabled := False;
       ComboSeverity.Enabled := False;
@@ -92,8 +114,76 @@ end;
 
 procedure TMainForm.FormDestroy(Sender: TObject);
 begin
+  { Before the repository, because a running generator still has events to hand
+    over and they are stored on this thread. }
+  StopGenerating;
   FRepository.Free;
   FDatabase.Free;
+end;
+
+procedure TMainForm.StartGenerating;
+begin
+  FGenerator := TEventGenerator.Create(GeneratedEventArrived);
+  TimerRefresh.Enabled := True;
+  ButtonGenerate.Caption := SStopGenerating;
+end;
+
+procedure TMainForm.StopGenerating;
+begin
+  if FGenerator = nil then
+    Exit;
+  { Freeing it is the whole of stopping: TThread.Destroy terminates the thread,
+    waits for it, and drops the callback it had queued. }
+  FreeAndNil(FGenerator);
+  TimerRefresh.Enabled := False;
+  ButtonGenerate.Caption := SStartGenerating;
+  { The timer is off now, so anything that arrived since its last tick would
+    stay invisible until something else refreshed the window. }
+  if FViewStale then
+    RefreshView;
+end;
+
+procedure TMainForm.ButtonGenerateClick(Sender: TObject);
+begin
+  if FGenerator = nil then
+    StartGenerating
+  else
+    StopGenerating;
+end;
+
+{ Runs on the main thread: the generator queues it there, so this is the same
+  thread that owns the connection and the array behind the table (ADR 0007). }
+procedure TMainForm.GeneratedEventArrived(const AEvent: TLogEvent);
+begin
+  try
+    FRepository.Insert(AEvent);
+    FViewStale := True;
+  except
+    { Stopping here would run the thread's destructor from inside a callback of
+      that same thread, and reporting here would put a dialog inside it. The
+      timer is outside both, so it does the stopping and the talking. }
+    on E: Exception do
+      FGeneratorProblem := E.Message;
+  end;
+end;
+
+procedure TMainForm.TimerRefreshTimer(Sender: TObject);
+var
+  Problem: string;
+begin
+  if FGeneratorProblem <> '' then
+  begin
+    { A failing insert fails again a second later, so the generator is stopped
+      and the reason given once rather than every second. Stopping disables this
+      timer, so the dialog cannot be reached twice. }
+    Problem := FGeneratorProblem;
+    FGeneratorProblem := '';
+    StopGenerating;
+    MessageDlg(Format(SGeneratorFailed, [Problem]), mtError, [mbOK], 0);
+    Exit;
+  end;
+  if FViewStale then
+    RefreshView;
 end;
 
 { The names come from the model rather than from the form designer, so adding a
@@ -170,6 +260,7 @@ begin
     place that knows the count. }
   ButtonClear.Enabled := Stored > 0;
   StatusBar.SimpleText := ViewSummary(Stored, Matching);
+  FViewStale := False;
 end;
 
 procedure TMainForm.ListViewEventsData(Sender: TObject; Item: TListItem);
