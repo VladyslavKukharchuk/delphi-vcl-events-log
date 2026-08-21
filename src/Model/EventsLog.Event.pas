@@ -8,16 +8,16 @@ type
   TLogEvent = record
   private
     FId: TGUID;
-    FTimestamp: TDateTime;
+    FTime: TDateTime;
     FText: string;
     FSeverity: TEventSeverity;
   public
-    constructor Create(const AId: TGUID; ATimestamp: TDateTime; const AText: string;
+    constructor Create(const AId: TGUID; ATime: TDateTime; const AText: string;
       ASeverity: TEventSeverity);
-    class function New(ATimestamp: TDateTime; const AText: string;
+    class function New(ATime: TDateTime; const AText: string;
       ASeverity: TEventSeverity): TLogEvent; static;
     property Id: TGUID read FId;
-    property Timestamp: TDateTime read FTimestamp;
+    property Time: TDateTime read FTime;
     property Text: string read FText;
     property Severity: TEventSeverity read FSeverity;
   end;
@@ -39,19 +39,19 @@ uses
 
 { TLogEvent }
 
-constructor TLogEvent.Create(const AId: TGUID; ATimestamp: TDateTime; const AText: string;
+constructor TLogEvent.Create(const AId: TGUID; ATime: TDateTime; const AText: string;
   ASeverity: TEventSeverity);
 begin
   FId := AId;
-  FTimestamp := ATimestamp;
+  FTime := ATime;
   FText := AText;
   FSeverity := ASeverity;
 end;
 
-class function TLogEvent.New(ATimestamp: TDateTime; const AText: string;
+class function TLogEvent.New(ATime: TDateTime; const AText: string;
   ASeverity: TEventSeverity): TLogEvent;
 begin
-  Result := TLogEvent.Create(TGUID.NewGuid, ATimestamp, AText, ASeverity);
+  Result := TLogEvent.Create(TGUID.NewGuid, ATime, AText, ASeverity);
 end;
 
 function SeverityToStr(ASeverity: TEventSeverity): string;
