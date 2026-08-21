@@ -57,9 +57,10 @@ recorded in an ADR.
 - [ ] **D7 — how the identifier is displayed** — a 36-character UUID does not belong in a grid
       column next to a message; most likely a shortened form with the full value available on demand.
       Decided together with the table.
-- [ ] **D8 — what the UI reads** — a snapshot held in memory with SQLite as the backing store, or a
-      query against the database on every filter change. Decides whether the whole log has to stay
-      resident, and therefore whether P2 buys anything.
+- [x] **D8 — what the UI reads** — SQL does the filtering and the result is materialised into an
+      array that the virtual list reads by index; the unfiltered view is the most recent rows by
+      time, bounded by a limit. Memory holds the result, not the whole log. True paging with windows
+      fetched on scroll was rejected as over-engineering here.
 - [ ] **D9 — when a generated event is written** — one INSERT per event, or a batched transaction.
       One row per second is modest, but in SQLite it is the transaction, not the row, that costs.
 - [ ] **D10 — which thread owns the connection** — a `TFDConnection` is not safe to share between

@@ -129,6 +129,7 @@
             <FormType>dfm</FormType>
         </DCCReference>
         <DCCReference Include="src\Model\EventsLog.Event.pas"/>
+        <DCCReference Include="src\Repository\EventsLog.Database.pas"/>
         <BuildConfiguration Include="Base">
             <Key>Base</Key>
         </BuildConfiguration>
