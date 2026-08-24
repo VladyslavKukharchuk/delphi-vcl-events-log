@@ -20,6 +20,12 @@ type
     LabelSeverity: TLabel;
     ComboSeverity: TComboBox;
     ListViewEvents: TListView;
+    PanelPager: TPanel;
+    LabelPage: TLabel;
+    ButtonPreviousPage: TButton;
+    ButtonNextPage: TButton;
+    LabelPageSize: TLabel;
+    ComboPageSize: TComboBox;
     OpenDialogJson: TOpenDialog;
     TimerRefresh: TTimer;
     procedure FormCreate(Sender: TObject);
@@ -29,6 +35,9 @@ type
     procedure ButtonClearClick(Sender: TObject);
     procedure FilterChange(Sender: TObject);
     procedure ButtonGenerateClick(Sender: TObject);
+    procedure ButtonPreviousPageClick(Sender: TObject);
+    procedure ButtonNextPageClick(Sender: TObject);
+    procedure ComboPageSizeChange(Sender: TObject);
     procedure TimerRefreshTimer(Sender: TObject);
   private
     FRepository: IEventRepository;
@@ -58,7 +67,8 @@ resourcestring
 
 procedure TMainForm.FormCreate(Sender: TObject);
 begin
-  FTable := TEventTable.Create(ListViewEvents);
+  FTable := TEventTable.Create(ListViewEvents, LabelPage, ButtonPreviousPage,
+    ButtonNextPage, ComboPageSize);
   FFilterBar := TFilterBar.Create(EditSearch, ComboSeverity);
 end;
 
@@ -116,6 +126,21 @@ procedure TMainForm.ButtonGenerateClick(Sender: TObject);
 begin
   FActions.ToggleGenerating;
   ShowGeneratingState;
+end;
+
+procedure TMainForm.ButtonPreviousPageClick(Sender: TObject);
+begin
+  FTable.GoPrevious;
+end;
+
+procedure TMainForm.ButtonNextPageClick(Sender: TObject);
+begin
+  FTable.GoNext;
+end;
+
+procedure TMainForm.ComboPageSizeChange(Sender: TObject);
+begin
+  FTable.ChangePageSize;
 end;
 
 procedure TMainForm.ShowGeneratingState;

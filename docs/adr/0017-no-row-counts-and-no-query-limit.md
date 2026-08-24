@@ -1,6 +1,8 @@
 # 0017. No row counts and no query limit
 
-- **Status:** accepted
+- **Status:** accepted; the count and the unbounded query are superseded by
+  [0018](0018-paged-events-table.md), which restores both in a bounded form. The
+  status bar stays removed.
 - **Date:** 2026-08-24
 - **Partially supersedes:** [0008](0008-listview-for-the-events-table.md) (the status line),
   [0010](0010-search-and-severity-filter.md) (the match count)
