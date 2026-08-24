@@ -12,7 +12,11 @@ uses
   EventsLog.Database in 'src\Repository\EventsLog.Database.pas',
   EventsLog.EventRepository in 'src\Repository\EventsLog.EventRepository.pas',
   EventsLog.Json in 'src\Repository\EventsLog.Json.pas',
-  EventsLog.Generator in 'src\Services\EventsLog.Generator.pas';
+  EventsLog.Generator in 'src\Services\EventsLog.Generator.pas',
+  EventsLog.GeneratorSession in 'src\Services\EventsLog.GeneratorSession.pas',
+  EventsLog.EventTable in 'src\UI\EventsLog.EventTable.pas',
+  EventsLog.FilterPanel in 'src\UI\EventsLog.FilterPanel.pas',
+  EventsLog.Actions in 'src\UI\EventsLog.Actions.pas';
 
 {$R *.res}
 
