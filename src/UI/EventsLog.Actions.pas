@@ -14,7 +14,6 @@ type
     FOpenDialog: TOpenDialog;
     FSession: TGeneratorSession;
     FOnDataChanged: TNotifyEvent;
-    procedure ReportImport(const AFileName: string; const AReport: TImportReport);
     procedure DataChanged;
   public
     constructor Create(const ARepository: IEventRepository;
@@ -33,11 +32,9 @@ implementation
 
 uses
   System.SysUtils, System.UITypes,
-  EventsLog.ProblemsDialog;
+  EventsLog.ImportPreview;
 
 resourcestring
-  SImportedFrom = 'Imported %d events from %s.';
-  SSkipped = '%d records were skipped:';
   SConfirmClear = 'Delete all %d stored events?' + sLineBreak +
     'This cannot be undone.';
   SGeneratorFailed = 'Generating was stopped, because the event could not be ' +
@@ -73,7 +70,6 @@ begin
     Exit;
   try
     Events := LoadEventsFromFile(FOpenDialog.FileName, Report);
-    FRepository.InsertMany(Events);
   except
     on E: EEventImportError do
     begin
@@ -81,29 +77,11 @@ begin
       Exit;
     end;
   end;
-  DataChanged;
-  ReportImport(FOpenDialog.FileName, Report);
-end;
 
-procedure TEventActions.ReportImport(const AFileName: string;
-  const AReport: TImportReport);
-var
-  Summary: string;
-  Kind: TMsgDlgType;
-begin
-  Summary := Format(SImportedFrom, [AReport.Accepted, AFileName]);
-  if AReport.Rejected > 0 then
-  begin
-    ShowImportProblems(Summary + sLineBreak +
-      Format(SSkipped, [AReport.Rejected]), AReport.Problems);
+  if not ConfirmImport(FOpenDialog.FileName, Report, Events) then
     Exit;
-  end;
-
-  if AReport.Accepted = 0 then
-    Kind := mtWarning
-  else
-    Kind := mtInformation;
-  MessageDlg(Summary, Kind, [mbOK], 0);
+  FRepository.InsertMany(Events);
+  DataChanged;
 end;
 
 procedure TEventActions.Clear;

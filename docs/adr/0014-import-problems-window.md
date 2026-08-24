@@ -1,6 +1,6 @@
 # 0014. Rejected records get their own window, listed in full
 
-- **Status:** accepted
+- **Status:** superseded by [0015](0015-import-preview-and-confirmation.md)
 - **Date:** 2026-08-24
 - **Revises:** the reporting half of [ADR 0009](0009-json-import-semantics.md), which kept only the
   first problem

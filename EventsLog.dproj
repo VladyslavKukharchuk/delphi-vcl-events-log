@@ -138,8 +138,8 @@
         <DCCReference Include="src\UI\EventsLog.Table.pas"/>
         <DCCReference Include="src\UI\EventsLog.FilterBar.pas"/>
         <DCCReference Include="src\UI\EventsLog.Actions.pas"/>
-        <DCCReference Include="src\UI\EventsLog.ProblemsDialog.pas">
-            <Form>ImportProblemsForm</Form>
+        <DCCReference Include="src\UI\EventsLog.ImportPreview.pas">
+            <Form>ImportPreviewForm</Form>
             <FormType>dfm</FormType>
         </DCCReference>
         <BuildConfiguration Include="Base">

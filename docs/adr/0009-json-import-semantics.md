@@ -107,7 +107,7 @@ Two failure modes, two mechanisms:
   history is untouched.
 - **A record is unusable** — not an object, or missing or unreadable `time`, `text` or `severity`. It is
   skipped and its problem kept, so the report can name every record the file lost rather than only
-  the first. Where those problems are shown is [ADR 0014](0014-import-problems-window.md).
+  the first. Where those problems are shown is [ADR 0015](0015-import-preview-and-confirmation.md).
 
 What counts as unusable is deliberately narrow. `severity` is matched case-insensitively against the
 same `SeverityNames` the rest of the application uses, so `ERROR` and `error` both pass while `Critical`
