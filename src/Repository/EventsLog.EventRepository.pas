@@ -52,11 +52,13 @@ const
   SUnreadableColumn = 'The stored event has an unreadable %s: %s';
 
 { Escapes what SQL LIKE would otherwise read as pattern syntax, so a user
-  typing % searches for a per cent sign instead of matching everything. }
+  typing % searches for a per cent sign instead of matching everything. The
+  backslash has to be doubled first: doing it after % and _ would escape the
+  backslashes those two lines just added. }
 function LikePattern(const AText: string): string;
 begin
   Result := AText
-    .Replace('\', '\', [rfReplaceAll])
+    .Replace('\', '\\', [rfReplaceAll])
     .Replace('%', '\%', [rfReplaceAll])
     .Replace('_', '\_', [rfReplaceAll]);
   Result := '%' + Result + '%';
