@@ -34,7 +34,7 @@ resourcestring
   SNotAnObject = 'record %d is not a JSON object';
   SMissingField = 'record %d has no %s';
   SNotText = 'record %d has a %s that is not text: %s';
-  SBadTime = 'record %d has an unusable time, the %s is wrong: %s';
+  SBadTime = 'record %d has an unusable time: %s';
   SBadSeverity = 'record %d has an unknown severity: %s';
 
 { TImportReport }
@@ -75,7 +75,6 @@ var
   EventTime: TDateTime;
   Raw, EventText: string;
   Severity: TEventSeverity;
-  TimeProblem: Integer;
 begin
   Result := False;
   if not (AElement is TJSONObject) then
@@ -87,10 +86,9 @@ begin
 
   if not TryReadText(Item, AIndex, 'time', Raw, AProblem) then
     Exit;
-  if not TryTextToTime(Raw, EventTime, TimeProblem) then
+  if not TryTextToTime(Raw, EventTime) then
   begin
-    AProblem := Format(SBadTime,
-      [AIndex, TimeProblemToStr(TimeProblem), Raw]);
+    AProblem := Format(SBadTime, [AIndex, Raw]);
     Exit;
   end;
 

@@ -33,20 +33,12 @@ function GuidToText(const AId: TGUID): string;
 function TryTextToGuid(const AValue: string; out AId: TGUID): Boolean;
 
 function TimeToText(ATime: TDateTime): string;
-function TryTextToTime(const AValue: string; out ATime: TDateTime): Boolean; overload;
-function TryTextToTime(const AValue: string; out ATime: TDateTime;
-  out AProblem: Integer): Boolean; overload;
-function TimeProblemToStr(AProblem: Integer): string;
+function TryTextToTime(const AValue: string; out ATime: TDateTime): Boolean;
 
 implementation
 
 uses
   System.SysUtils, System.DateUtils;
-
-const
-  TimeProblemNames: array[1..9] of string = ('week', 'month', 'year', 'day',
-    'hour', 'minute', 'second', 'time zone', 'milliseconds');
-  TimeProblemUnknown = 0;
 
 { TLogEvent }
 
@@ -111,32 +103,13 @@ begin
 end;
 
 function TryTextToTime(const AValue: string; out ATime: TDateTime): Boolean;
-var
-  Ignored: Integer;
-begin
-  Result := TryTextToTime(AValue, ATime, Ignored);
-end;
-
-function TryTextToTime(const AValue: string; out ATime: TDateTime;
-  out AProblem: Integer): Boolean;
 begin
   try
-    Result := TryISO8601ToDate(AValue, ATime, AProblem, [ioNoTZIsLocal]);
+    Result := TryISO8601ToDate(AValue, ATime, [ioNoTZIsLocal]);
   except
     on EConvertError do
-    begin
-      AProblem := TimeProblemUnknown;
       Result := False;
-    end;
   end;
-end;
-
-function TimeProblemToStr(AProblem: Integer): string;
-begin
-  if (AProblem >= Low(TimeProblemNames)) and (AProblem <= High(TimeProblemNames)) then
-    Result := TimeProblemNames[AProblem]
-  else
-    Result := 'format';
 end;
 
 end.

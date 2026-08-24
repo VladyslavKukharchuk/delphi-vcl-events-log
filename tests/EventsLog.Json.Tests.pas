@@ -56,13 +56,6 @@ type
 
     [Test]
     procedure RoundTripsWhatItWrote;
-
-    [Test]
-    [TestCase('month', '2,month')]
-    [TestCase('time zone', '8,time zone')]
-    [TestCase('above the range', '99,format')]
-    [TestCase('zero', '0,format')]
-    procedure NamesTheRejectedField(ACode: Integer; const AExpected: string);
   end;
 
   [TestFixture]
@@ -217,12 +210,6 @@ begin
   Written := TimeToText(Original);
   Assert.IsTrue(TryTextToTime(Written, Parsed), 'written form must parse back');
   Assert.AreEqual(Original, Parsed, 'the round trip must be exact');
-end;
-
-procedure TTimeTextTests.NamesTheRejectedField(ACode: Integer;
-  const AExpected: string);
-begin
-  Assert.AreEqual(AExpected, TimeProblemToStr(ACode));
 end;
 
 { TSeverityTests }
