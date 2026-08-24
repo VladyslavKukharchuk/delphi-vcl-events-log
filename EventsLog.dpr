@@ -8,6 +8,7 @@ uses
   EventsLog.Event in 'src\Model\EventsLog.Event.pas',
   EventsLog.Filter in 'src\Model\EventsLog.Filter.pas',
   EventsLog.Database in 'src\Repository\EventsLog.Database.pas',
+  EventsLog.Schema in 'src\Repository\EventsLog.Schema.pas',
   EventsLog.EventRepository in 'src\Repository\EventsLog.EventRepository.pas',
   EventsLog.EventFile in 'src\Repository\EventsLog.EventFile.pas',
   EventsLog.Generator in 'src\Services\EventsLog.Generator.pas',
@@ -20,7 +21,7 @@ uses
 {$R *.res}
 
 var
-  Database: TEventsDatabase;
+  Database: TDatabase;
   Repository: IEventRepository;
   Problem: string;
 
@@ -29,7 +30,8 @@ begin
   Application.MainFormOnTaskbar := True;
   try
     try
-      Database := TEventsDatabase.Create;
+      Database := TDatabase.Create;
+      EnsureSchema(Database);
       Repository := TEventRepository.Create(Database);
     except
       on E: Exception do

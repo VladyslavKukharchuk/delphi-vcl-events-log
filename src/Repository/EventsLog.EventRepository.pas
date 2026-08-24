@@ -23,10 +23,10 @@ type
 
   TEventRepository = class(TInterfacedObject, IEventRepository)
   private
-    FDatabase: TEventsDatabase;
+    FDatabase: TDatabase;
     procedure Store(const ASql: string; const AEvent: TLogEvent);
   public
-    constructor Create(ADatabase: TEventsDatabase);
+    constructor Create(ADatabase: TDatabase);
     procedure Insert(const AEvent: TLogEvent);
     procedure InsertMany(const AEvents: TArray<TLogEvent>);
     procedure DeleteAll;
@@ -129,7 +129,7 @@ end;
 
 { TEventRepository }
 
-constructor TEventRepository.Create(ADatabase: TEventsDatabase);
+constructor TEventRepository.Create(ADatabase: TDatabase);
 begin
   inherited Create;
   FDatabase := ADatabase;
