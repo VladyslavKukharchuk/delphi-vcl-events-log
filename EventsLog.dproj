@@ -136,7 +136,7 @@
         <DCCReference Include="src\Services\EventsLog.Generator.pas"/>
         <DCCReference Include="src\Services\EventsLog.GeneratorSession.pas"/>
         <DCCReference Include="src\UI\EventsLog.Table.pas"/>
-        <DCCReference Include="src\UI\EventsLog.Filters.pas"/>
+        <DCCReference Include="src\UI\EventsLog.FilterBar.pas"/>
         <DCCReference Include="src\UI\EventsLog.Actions.pas"/>
         <BuildConfiguration Include="Base">
             <Key>Base</Key>

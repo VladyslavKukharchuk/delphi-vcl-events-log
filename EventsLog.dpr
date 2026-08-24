@@ -13,7 +13,7 @@ uses
   EventsLog.Generator in 'src\Services\EventsLog.Generator.pas',
   EventsLog.GeneratorSession in 'src\Services\EventsLog.GeneratorSession.pas',
   EventsLog.Table in 'src\UI\EventsLog.Table.pas',
-  EventsLog.Filters in 'src\UI\EventsLog.Filters.pas',
+  EventsLog.FilterBar in 'src\UI\EventsLog.FilterBar.pas',
   EventsLog.Actions in 'src\UI\EventsLog.Actions.pas';
 
 {$R *.res}

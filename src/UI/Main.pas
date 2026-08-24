@@ -7,7 +7,7 @@ uses
   Vcl.Graphics, Vcl.Controls, Vcl.Forms, Vcl.Dialogs, Vcl.ComCtrls, Vcl.ExtCtrls,
   Vcl.StdCtrls,
   EventsLog.EventRepository,
-  EventsLog.Table, EventsLog.Filters, EventsLog.Actions;
+  EventsLog.Table, EventsLog.FilterBar, EventsLog.Actions;
 
 type
   TMainForm = class(TForm)
@@ -34,7 +34,7 @@ type
   private
     FRepository: IEventRepository;
     FTable: TEventTable;
-    FFilters: TFilters;
+    FFilterBar: TFilterBar;
     FActions: TEventActions;
     procedure DataChanged(Sender: TObject);
     procedure ShowGeneratingState;
@@ -59,7 +59,7 @@ resourcestring
 procedure TMainForm.FormCreate(Sender: TObject);
 begin
   FTable := TEventTable.Create(ListViewEvents, StatusBar);
-  FFilters := TFilters.Create(EditSearch, ComboSeverity);
+  FFilterBar := TFilterBar.Create(EditSearch, ComboSeverity);
 end;
 
 procedure TMainForm.Attach(const ARepository: IEventRepository;
@@ -79,7 +79,7 @@ end;
 procedure TMainForm.FormDestroy(Sender: TObject);
 begin
   FActions.Free;
-  FFilters.Free;
+  FFilterBar.Free;
   FTable.Free;
 end;
 
@@ -87,7 +87,7 @@ procedure TMainForm.DataChanged(Sender: TObject);
 begin
   if FRepository = nil then
     Exit;
-  FTable.Refresh(FRepository, FFilters.Filter);
+  FTable.Refresh(FRepository, FFilterBar.Filter);
   ButtonClear.Enabled := FTable.StoredCount > 0;
   FActions.ViewRefreshed;
 end;
@@ -142,7 +142,7 @@ begin
   ButtonImport.Enabled := False;
   ButtonClear.Enabled := False;
   ButtonGenerate.Enabled := False;
-  FFilters.SetEnabled(False);
+  FFilterBar.SetEnabled(False);
   FTable.ShowUnavailable(SDatabaseUnavailable);
   MessageDlg(AMessage, mtError, [mbOK], 0);
 end;

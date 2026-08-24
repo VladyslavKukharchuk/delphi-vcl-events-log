@@ -1,4 +1,4 @@
-unit EventsLog.Filters;
+unit EventsLog.FilterBar;
 
 interface
 
@@ -7,7 +7,7 @@ uses
   EventsLog.Event, EventsLog.Filter;
 
 type
-  TFilters = class
+  TFilterBar = class
   private
     FEdit: TEdit;
     FCombo: TComboBox;
@@ -27,7 +27,7 @@ const
 resourcestring
   SSeverityAll = 'All';
 
-constructor TFilters.Create(AEdit: TEdit; ACombo: TComboBox);
+constructor TFilterBar.Create(AEdit: TEdit; ACombo: TComboBox);
 begin
   inherited Create;
   FEdit := AEdit;
@@ -35,7 +35,7 @@ begin
   FillSeverities;
 end;
 
-procedure TFilters.FillSeverities;
+procedure TFilterBar.FillSeverities;
 var
   Severity: TEventSeverity;
 begin
@@ -51,19 +51,19 @@ begin
   FCombo.ItemIndex := SeverityAllIndex;
 end;
 
-function TFilters.SelectedSeverities: TSeveritySet;
+function TFilterBar.SelectedSeverities: TSeveritySet;
 begin
   if FCombo.ItemIndex <= SeverityAllIndex then
     Exit(AllSeverities);
   Result := [TEventSeverity(FCombo.ItemIndex - 1)];
 end;
 
-function TFilters.Filter: TEventFilter;
+function TFilterBar.Filter: TEventFilter;
 begin
   Result := TEventFilter.Create(FEdit.Text, SelectedSeverities);
 end;
 
-procedure TFilters.SetEnabled(AValue: Boolean);
+procedure TFilterBar.SetEnabled(AValue: Boolean);
 begin
   FEdit.Enabled := AValue;
   FCombo.Enabled := AValue;
