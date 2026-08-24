@@ -35,8 +35,10 @@ uses
   EventsLog.ImportPreview;
 
 resourcestring
+  SNotStored = 'The imported events could not be stored:' + sLineBreak + '%s';
   SConfirmClear = 'Delete all %d stored events?' + sLineBreak +
     'This cannot be undone.';
+  SNotCleared = 'The stored events could not be deleted:' + sLineBreak + '%s';
   SGeneratorFailed = 'Generating was stopped, because the event could not be ' +
     'stored:' + sLineBreak + '%s';
 
@@ -80,7 +82,15 @@ begin
 
   if not ConfirmImport(FOpenDialog.FileName, Report, Events) then
     Exit;
-  FRepository.InsertMany(Events);
+  try
+    FRepository.InsertMany(Events);
+  except
+    on E: Exception do
+    begin
+      MessageDlg(Format(SNotStored, [E.Message]), mtError, [mbOK], 0);
+      Exit;
+    end;
+  end;
   DataChanged;
 end;
 
@@ -94,7 +104,15 @@ begin
   if MessageDlg(Format(SConfirmClear, [Stored]), mtWarning, [mbYes, mbNo], 0,
     mbNo) <> mrYes then
     Exit;
-  FRepository.DeleteAll;
+  try
+    FRepository.DeleteAll;
+  except
+    on E: Exception do
+    begin
+      MessageDlg(Format(SNotCleared, [E.Message]), mtError, [mbOK], 0);
+      Exit;
+    end;
+  end;
   DataChanged;
 end;
 
