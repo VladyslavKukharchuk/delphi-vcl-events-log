@@ -10,30 +10,29 @@ const
 
 type
   EEventRepositoryError = class(Exception);
+  IEventRepository = interface
+    ['{F33D6671-3303-4230-AF2C-5427DE0BF82D}']
+    procedure Insert(const AEvent: TLogEvent);
+    procedure InsertMany(const AEvents: TArray<TLogEvent>);
+    procedure DeleteAll;
+    function Query(const AFilter: TEventFilter;
+      ALimit: Integer = DefaultQueryLimit): TArray<TLogEvent>;
+    function Count: Int64; overload;
+    function Count(const AFilter: TEventFilter): Int64; overload;
+  end;
 
-  { The only place that speaks SQL. Rows become TLogEvent values before they
-    leave, so no dataset crosses out of this layer. }
-  TEventRepository = class
+  TEventRepository = class(TInterfacedObject, IEventRepository)
   private
     FDatabase: TEventsDatabase;
     procedure Store(const ASql: string; const AEvent: TLogEvent);
   public
     constructor Create(ADatabase: TEventsDatabase);
-    { One statement in its own implicit transaction. At one event a second the
-      batching InsertMany needs would only buy a window in which events are
-      lost (ADR 0007). }
     procedure Insert(const AEvent: TLogEvent);
-    { Import appends. The inserts share one explicit transaction, because a file
-      can hold thousands of rows (ADR 0009). }
     procedure InsertMany(const AEvents: TArray<TLogEvent>);
-    { The only path in the application that removes events, and it removes all
-      of them. There is no per-event delete because nothing asks for one. }
     procedure DeleteAll;
     function Query(const AFilter: TEventFilter;
       ALimit: Integer = DefaultQueryLimit): TArray<TLogEvent>;
     function Count: Int64; overload;
-    { How many events the filter matches. The window needs it to tell a filter
-      that hides events from a query that was capped by its limit. }
     function Count(const AFilter: TEventFilter): Int64; overload;
   end;
 

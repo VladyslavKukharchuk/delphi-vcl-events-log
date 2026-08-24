@@ -6,13 +6,7 @@ uses
   System.SysUtils, EventsLog.Event;
 
 type
-  { The file itself is unusable: unreadable, not JSON, or not an array of
-    events. Nothing can be salvaged, so this is raised rather than reported. }
   EEventImportError = class(Exception);
-
-  { What a usable file contained. Rejected records are counted rather than
-    fatal, and the first problem is kept so the user learns something more
-    useful than a number. }
   TImportReport = record
   private
     FAccepted: Integer;
@@ -53,9 +47,6 @@ begin
   FFirstProblem := AFirstProblem;
 end;
 
-{ A key that is absent and a key holding the wrong kind of value are different
-  mistakes, and saying so is the difference between a message that helps and one
-  that misleads. Values[] returns nil for an absent key. }
 function TryReadText(AItem: TJSONObject; AIndex: Integer; const AName: string;
   out AText: string; out AProblem: string): Boolean;
 var
@@ -114,7 +105,6 @@ begin
     Exit;
   end;
 
-  { The file carries no identity: identifiers are minted here (ADR 0009). }
   AEvent := TLogEvent.New(EventTime, EventText, Severity);
   Result := True;
 end;
@@ -132,14 +122,10 @@ begin
   try
     Content := TFile.ReadAllText(AFileName, TEncoding.UTF8);
   except
-    { Any failure to read means the same thing to the caller: this file cannot
-      be imported. }
     on E: Exception do
       raise EEventImportError.CreateFmt(SCannotRead, [AFileName, E.Message]);
   end;
 
-  { ParseJSONValue returns nil for invalid JSON instead of raising, which is
-    exactly the guarded behaviour we want here. }
   Root := TJSONObject.ParseJSONValue(Content);
   if Root = nil then
     raise EEventImportError.CreateFmt(SNotJson, [AFileName]);

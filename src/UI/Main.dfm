@@ -38,7 +38,7 @@ object MainForm: TMainForm
       FocusControl = ComboSeverity
     end
     object ButtonImport: TButton
-      Left = 8
+      Left = 144
       Top = 8
       Width = 130
       Height = 25
@@ -47,7 +47,7 @@ object MainForm: TMainForm
       OnClick = ButtonImportClick
     end
     object ButtonClear: TButton
-      Left = 146
+      Left = 280
       Top = 8
       Width = 130
       Height = 25
@@ -57,7 +57,7 @@ object MainForm: TMainForm
       OnClick = ButtonClearClick
     end
     object ButtonGenerate: TButton
-      Left = 284
+      Left = 8
       Top = 8
       Width = 130
       Height = 25

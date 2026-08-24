@@ -1,6 +1,6 @@
 # 0001. Layer folders under src/ with plain classes
 
-- **Status:** accepted
+- **Status:** accepted; the composition paragraph is superseded by [0013](0013-repository-interface-and-composition-root.md)
 - **Date:** 2026-08-21
 
 ## Context
