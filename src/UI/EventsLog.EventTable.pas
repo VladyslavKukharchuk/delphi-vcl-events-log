@@ -26,7 +26,8 @@ type
     constructor Create(AListView: TListView; AStatusBar: TStatusBar);
     { Runs the query again and repaints. The only place that reads the
       repository on the table's behalf. }
-    procedure Refresh(ARepository: TEventRepository; const AFilter: TEventFilter);
+    procedure Refresh(const ARepository: IEventRepository;
+      const AFilter: TEventFilter);
     { The list view's OnData, one row at a time. }
     procedure ProvideItem(AItem: TListItem);
     { Nothing can be queried: an empty table, and the reason where the count
@@ -74,7 +75,7 @@ begin
     Result := Format(SMatchingAll, [AMatching, FStored]);
 end;
 
-procedure TEventTable.Refresh(ARepository: TEventRepository;
+procedure TEventTable.Refresh(const ARepository: IEventRepository;
   const AFilter: TEventFilter);
 var
   Matching: Int64;

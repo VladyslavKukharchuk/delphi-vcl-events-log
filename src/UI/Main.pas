@@ -6,7 +6,7 @@ uses
   Winapi.Windows, Winapi.Messages, System.SysUtils, System.Classes, System.UITypes,
   Vcl.Graphics, Vcl.Controls, Vcl.Forms, Vcl.Dialogs, Vcl.ComCtrls, Vcl.ExtCtrls,
   Vcl.StdCtrls,
-  EventsLog.Database, EventsLog.EventRepository,
+  EventsLog.EventRepository,
   EventsLog.EventTable, EventsLog.FilterPanel, EventsLog.Actions;
 
 type
@@ -14,7 +14,11 @@ type
     filter panel and the actions behind the buttons (ADR 0012). It creates them,
     hands each the controls it drives, and connects them to one another. That is
     why every handler below is one line - the decisions live in the blocks, and
-    the only thing left here is who to tell. }
+    the only thing left here is who to tell.
+
+    It does not create the repository. That happens in the composition root and
+    arrives through Attach, which is also where the window is told that there is
+    no database to work with at all (ADR 0013). }
   TMainForm = class(TForm)
     PanelTop: TPanel;
     ButtonImport: TButton;
@@ -37,16 +41,23 @@ type
     procedure ButtonGenerateClick(Sender: TObject);
     procedure TimerRefreshTimer(Sender: TObject);
   private
-    FDatabase: TEventsDatabase;
-    FRepository: TEventRepository;
+    { Held, not owned: a repository is reference counted, and the composition
+      root drops the last reference after this form is gone. Nil until Attach,
+      and nil for good when there is no database - which is the whole of the
+      degraded state (ADR 0013). }
+    FRepository: IEventRepository;
     FTable: TEventTable;
     FFilters: TFilterPanel;
-    { Nil exactly when there is no database to act on, which is the whole of the
-      degraded state. }
     FActions: TEventActions;
     procedure DataChanged(Sender: TObject);
     procedure ShowGeneratingState;
     procedure EnterDegradedMode(const AMessage: string);
+  public
+    { Called by the composition root after the form exists and before the
+      application runs. ARepository is nil when the database could not be
+      opened, and AProblem then says why. }
+    procedure Attach(const ARepository: IEventRepository;
+      const AProblem: string);
   end;
 
 var
@@ -61,25 +72,25 @@ resourcestring
   SStartGenerating = 'Start generating';
   SStopGenerating = 'Stop generating';
 
+{ Only the controls and the blocks that drive them. There is nothing to show
+  yet, because nothing to show it from has arrived (see Attach). }
 procedure TMainForm.FormCreate(Sender: TObject);
 begin
   FTable := TEventTable.Create(ListViewEvents, StatusBar);
   FFilters := TFilterPanel.Create(EditSearch, ComboSeverity);
-  try
-    FDatabase := TEventsDatabase.Create;
-    FRepository := TEventRepository.Create(FDatabase);
-  except
-    { The repository and the database raise with the path in the message.
-      Turning that into something the user reads is this form's job, and only
-      this form's. }
-    on E: Exception do
-    begin
-      FreeAndNil(FRepository);
-      FreeAndNil(FDatabase);
-      EnterDegradedMode(E.Message);
-      Exit;
-    end;
+end;
+
+procedure TMainForm.Attach(const ARepository: IEventRepository;
+  const AProblem: string);
+begin
+  if ARepository = nil then
+  begin
+    { The composition root raised with the path in the message. Turning that
+      into something the user reads is this form's job, and only this form's. }
+    EnterDegradedMode(AProblem);
+    Exit;
   end;
+  FRepository := ARepository;
   FActions := TEventActions.Create(FRepository, OpenDialogJson);
   FActions.OnDataChanged := DataChanged;
   DataChanged(Self);
@@ -102,12 +113,11 @@ begin
   { The actions go first, because freeing them stops the generator, and a
     running generator still has events to hand over which are stored on this
     thread (ADR 0011). The blocks hold controls they do not own, so freeing them
-    leaves the window intact. }
+    leaves the window intact. The repository is not freed here at all: the
+    composition root drops the last reference to it once this form is gone. }
   FActions.Free;
   FFilters.Free;
   FTable.Free;
-  FRepository.Free;
-  FDatabase.Free;
 end;
 
 { The one path that puts the stored history back on the screen. Everything that

@@ -16,7 +16,8 @@ type
     is easy to get wrong has nothing to do with controls. }
   TGeneratorSession = class
   private
-    FRepository: TEventRepository;
+    FRepository: IEventRepository;
+    FInterval: Cardinal;
     { Nil exactly when the session is not running, so the caption of a button
       has no second copy of that state to keep in step with (ADR 0011). }
     FGenerator: TEventGenerator;
@@ -24,7 +25,10 @@ type
     FProblem: string;
     procedure EventArrived(const AEvent: TLogEvent);
   public
-    constructor Create(ARepository: TEventRepository);
+    { The interval is a parameter so a test does not have to wait out a whole
+      second for each event it wants to see (ADR 0013). }
+    constructor Create(const ARepository: IEventRepository;
+      AInterval: Cardinal = DefaultInterval);
     destructor Destroy; override;
     procedure Start;
     procedure Stop;
@@ -44,10 +48,12 @@ implementation
 uses
   System.SysUtils;
 
-constructor TGeneratorSession.Create(ARepository: TEventRepository);
+constructor TGeneratorSession.Create(const ARepository: IEventRepository;
+  AInterval: Cardinal);
 begin
   inherited Create;
   FRepository := ARepository;
+  FInterval := AInterval;
 end;
 
 destructor TGeneratorSession.Destroy;
@@ -60,7 +66,7 @@ procedure TGeneratorSession.Start;
 begin
   if FGenerator <> nil then
     Exit;
-  FGenerator := TEventGenerator.Create(EventArrived);
+  FGenerator := TEventGenerator.Create(EventArrived, FInterval);
 end;
 
 procedure TGeneratorSession.Stop;

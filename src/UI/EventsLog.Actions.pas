@@ -18,14 +18,15 @@ type
     it. The generator's failure is the exception, and Poll says why. }
   TEventActions = class
   private
-    FRepository: TEventRepository;
+    FRepository: IEventRepository;
     FOpenDialog: TOpenDialog;
     FSession: TGeneratorSession;
     FOnDataChanged: TNotifyEvent;
     procedure ReportImport(const AFileName: string; const AReport: TImportReport);
     procedure DataChanged;
   public
-    constructor Create(ARepository: TEventRepository; AOpenDialog: TOpenDialog);
+    constructor Create(const ARepository: IEventRepository;
+      AOpenDialog: TOpenDialog);
     destructor Destroy; override;
     procedure Import;
     procedure Clear;
@@ -57,7 +58,7 @@ resourcestring
   SGeneratorFailed = 'Generating was stopped, because the event could not be ' +
     'stored:' + sLineBreak + '%s';
 
-constructor TEventActions.Create(ARepository: TEventRepository;
+constructor TEventActions.Create(const ARepository: IEventRepository;
   AOpenDialog: TOpenDialog);
 begin
   inherited Create;
