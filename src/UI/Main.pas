@@ -19,7 +19,6 @@ type
     EditSearch: TEdit;
     LabelSeverity: TLabel;
     ComboSeverity: TComboBox;
-    StatusBar: TStatusBar;
     ListViewEvents: TListView;
     OpenDialogJson: TOpenDialog;
     TimerRefresh: TTimer;
@@ -52,13 +51,14 @@ implementation
 {$R *.dfm}
 
 resourcestring
-  SDatabaseUnavailable = 'The event database is not available.';
+  SDatabaseUnavailable = 'The event database is not available.' + sLineBreak +
+    '%s';
   SStartGenerating = 'Start generating';
   SStopGenerating = 'Stop generating';
 
 procedure TMainForm.FormCreate(Sender: TObject);
 begin
-  FTable := TEventTable.Create(ListViewEvents, StatusBar);
+  FTable := TEventTable.Create(ListViewEvents);
   FFilterBar := TFilterBar.Create(EditSearch, ComboSeverity);
 end;
 
@@ -73,6 +73,7 @@ begin
   FRepository := ARepository;
   FActions := TEventActions.Create(FRepository, OpenDialogJson);
   FActions.OnDataChanged := DataChanged;
+  ButtonClear.Enabled := True;
   DataChanged(Self);
 end;
 
@@ -88,7 +89,6 @@ begin
   if FRepository = nil then
     Exit;
   FTable.Refresh(FRepository, FFilterBar.Filter);
-  ButtonClear.Enabled := FTable.StoredCount > 0;
   FActions.ViewRefreshed;
 end;
 
@@ -143,8 +143,8 @@ begin
   ButtonClear.Enabled := False;
   ButtonGenerate.Enabled := False;
   FFilterBar.SetEnabled(False);
-  FTable.ShowUnavailable(SDatabaseUnavailable);
-  MessageDlg(AMessage, mtError, [mbOK], 0);
+  FTable.Clear;
+  MessageDlg(Format(SDatabaseUnavailable, [AMessage]), mtError, [mbOK], 0);
 end;
 
 end.

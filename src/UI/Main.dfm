@@ -84,19 +84,11 @@ object MainForm: TMainForm
       OnChange = FilterChange
     end
   end
-  object StatusBar: TStatusBar
-    Left = 0
-    Top = 542
-    Width = 1000
-    Height = 19
-    Panels = <>
-    SimplePanel = True
-  end
   object ListViewEvents: TListView
     Left = 0
     Top = 76
     Width = 1000
-    Height = 466
+    Height = 485
     Align = alClient
     Columns = <
       item

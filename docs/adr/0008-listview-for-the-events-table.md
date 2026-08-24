@@ -1,6 +1,6 @@
 # 0008. A virtual TListView for the events table
 
-- **Status:** accepted
+- **Status:** accepted; the status line is superseded by [0017](0017-no-row-counts-and-no-query-limit.md)
 - **Date:** 2026-08-21
 
 ## Context

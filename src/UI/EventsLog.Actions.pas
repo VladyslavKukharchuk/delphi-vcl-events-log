@@ -36,7 +36,7 @@ uses
 
 resourcestring
   SNotStored = 'The imported events could not be stored:' + sLineBreak + '%s';
-  SConfirmClear = 'Delete all %d stored events?' + sLineBreak +
+  SConfirmClear = 'Delete all stored events?' + sLineBreak +
     'This cannot be undone.';
   SNotCleared = 'The stored events could not be deleted:' + sLineBreak + '%s';
   SGeneratorFailed = 'Generating was stopped, because the event could not be ' +
@@ -95,14 +95,8 @@ begin
 end;
 
 procedure TEventActions.Clear;
-var
-  Stored: Int64;
 begin
-  Stored := FRepository.Count;
-  if Stored = 0 then
-    Exit;
-  if MessageDlg(Format(SConfirmClear, [Stored]), mtWarning, [mbYes, mbNo], 0,
-    mbNo) <> mrYes then
+  if MessageDlg(SConfirmClear, mtWarning, [mbYes, mbNo], 0, mbNo) <> mrYes then
     Exit;
   try
     FRepository.DeleteAll;

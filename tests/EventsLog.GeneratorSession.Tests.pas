@@ -57,10 +57,7 @@ type
     procedure Insert(const AEvent: TLogEvent);
     procedure InsertMany(const AEvents: TArray<TLogEvent>);
     procedure DeleteAll;
-    function Query(const AFilter: TEventFilter;
-      ALimit: Integer = DefaultQueryLimit): TArray<TLogEvent>;
-    function Count: Int64; overload;
-    function Count(const AFilter: TEventFilter): Int64; overload;
+    function Query(const AFilter: TEventFilter): TArray<TLogEvent>;
     property Stored: Integer read FStored;
   end;
 
@@ -90,20 +87,9 @@ begin
   FStored := 0;
 end;
 
-function TFakeRepository.Query(const AFilter: TEventFilter;
-  ALimit: Integer): TArray<TLogEvent>;
+function TFakeRepository.Query(const AFilter: TEventFilter): TArray<TLogEvent>;
 begin
   Result := nil;
-end;
-
-function TFakeRepository.Count: Int64;
-begin
-  Result := FStored;
-end;
-
-function TFakeRepository.Count(const AFilter: TEventFilter): Int64;
-begin
-  Result := FStored;
 end;
 
 { The generator hands its event to the main thread with TThread.Queue, and that

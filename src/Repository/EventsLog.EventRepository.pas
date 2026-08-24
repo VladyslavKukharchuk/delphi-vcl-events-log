@@ -5,9 +5,6 @@ interface
 uses
   System.SysUtils, EventsLog.Event, EventsLog.Filter, EventsLog.Database;
 
-const
-  DefaultQueryLimit = 1000;
-
 type
   EEventRepositoryError = class(Exception);
   IEventRepository = interface
@@ -15,10 +12,7 @@ type
     procedure Insert(const AEvent: TLogEvent);
     procedure InsertMany(const AEvents: TArray<TLogEvent>);
     procedure DeleteAll;
-    function Query(const AFilter: TEventFilter;
-      ALimit: Integer = DefaultQueryLimit): TArray<TLogEvent>;
-    function Count: Int64; overload;
-    function Count(const AFilter: TEventFilter): Int64; overload;
+    function Query(const AFilter: TEventFilter): TArray<TLogEvent>;
   end;
 
   TEventRepository = class(TInterfacedObject, IEventRepository)
@@ -30,10 +24,7 @@ type
     procedure Insert(const AEvent: TLogEvent);
     procedure InsertMany(const AEvents: TArray<TLogEvent>);
     procedure DeleteAll;
-    function Query(const AFilter: TEventFilter;
-      ALimit: Integer = DefaultQueryLimit): TArray<TLogEvent>;
-    function Count: Int64; overload;
-    function Count(const AFilter: TEventFilter): Int64; overload;
+    function Query(const AFilter: TEventFilter): TArray<TLogEvent>;
   end;
 
 implementation
@@ -47,7 +38,6 @@ const
     'values (:id, :time, :text, :severity)';
   SqlDeleteAll = 'delete from events';
   SqlSelect = 'select id, time, text, severity from events';
-  SqlCount = 'select count(*) from events';
 
   SUnreadableColumn = 'The stored event has an unreadable %s: %s';
 
@@ -164,8 +154,7 @@ begin
   end;
 end;
 
-function TEventRepository.Query(const AFilter: TEventFilter;
-  ALimit: Integer): TArray<TLogEvent>;
+function TEventRepository.Query(const AFilter: TEventFilter): TArray<TLogEvent>;
 var
   Cursor: TFDQuery;
   Events: TList<TLogEvent>;
@@ -173,10 +162,8 @@ begin
   Cursor := TFDQuery.Create(nil);
   try
     Cursor.Connection := FDatabase.Connection;
-    Cursor.SQL.Text := SqlSelect + WhereClause(AFilter) +
-      ' order by time desc limit :limit';
+    Cursor.SQL.Text := SqlSelect + WhereClause(AFilter) + ' order by time desc';
     BindFilter(Cursor, AFilter);
-    Cursor.ParamByName('limit').AsInteger := ALimit;
     Cursor.Open;
     Events := TList<TLogEvent>.Create;
     try
@@ -197,27 +184,6 @@ end;
 procedure TEventRepository.DeleteAll;
 begin
   FDatabase.Connection.ExecSQL(SqlDeleteAll);
-end;
-
-function TEventRepository.Count: Int64;
-begin
-  Result := FDatabase.Connection.ExecSQLScalar(SqlCount);
-end;
-
-function TEventRepository.Count(const AFilter: TEventFilter): Int64;
-var
-  Cursor: TFDQuery;
-begin
-  Cursor := TFDQuery.Create(nil);
-  try
-    Cursor.Connection := FDatabase.Connection;
-    Cursor.SQL.Text := SqlCount + WhereClause(AFilter);
-    BindFilter(Cursor, AFilter);
-    Cursor.Open;
-    Result := Cursor.Fields[0].AsLargeInt;
-  finally
-    Cursor.Free;
-  end;
 end;
 
 end.
