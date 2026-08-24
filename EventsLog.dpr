@@ -14,7 +14,8 @@ uses
   EventsLog.GeneratorSession in 'src\Services\EventsLog.GeneratorSession.pas',
   EventsLog.Table in 'src\UI\EventsLog.Table.pas',
   EventsLog.FilterBar in 'src\UI\EventsLog.FilterBar.pas',
-  EventsLog.Actions in 'src\UI\EventsLog.Actions.pas';
+  EventsLog.Actions in 'src\UI\EventsLog.Actions.pas',
+  EventsLog.ProblemsDialog in 'src\UI\EventsLog.ProblemsDialog.pas' {ImportProblemsForm};
 
 {$R *.res}
 

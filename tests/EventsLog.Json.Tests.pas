@@ -30,8 +30,7 @@ type
     procedure UnusableFileRaises(const AFileName: string);
 
     [Test]
-    [TestCase('names the record and the field', 'sample-events-invalid.json|record 2 has no time', '|')]
-    procedure FirstProblemIsUseful(const AFileName, AExpected: string);
+    procedure EveryRejectedRecordIsReported;
 
     [Test]
     procedure IdentifiersAreMintedAndDistinct;
@@ -139,13 +138,15 @@ begin
   Assert.IsTrue(Raised, 'expected EEventImportError for ' + AFileName);
 end;
 
-procedure TJsonImportTests.FirstProblemIsUseful(const AFileName,
-  AExpected: string);
+procedure TJsonImportTests.EveryRejectedRecordIsReported;
 var
   Report: TImportReport;
 begin
-  LoadEventsFromFile(Sample(AFileName), Report);
-  Assert.AreEqual(AExpected, Report.FirstProblem);
+  LoadEventsFromFile(Sample('sample-events-invalid.json'), Report);
+  Assert.AreEqual(7, Integer(Length(Report.Problems)),
+    'one line per rejected record');
+  Assert.AreEqual('record 2 has no time', Report.Problems[0], 'first');
+  Assert.AreEqual('record 8 is not a JSON object', Report.Problems[6], 'last');
 end;
 
 procedure TJsonImportTests.IdentifiersAreMintedAndDistinct;

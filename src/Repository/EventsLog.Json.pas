@@ -10,13 +10,13 @@ type
   TImportReport = record
   private
     FAccepted: Integer;
-    FRejected: Integer;
-    FFirstProblem: string;
+    FProblems: TArray<string>;
+    function GetRejected: Integer;
   public
-    constructor Create(AAccepted, ARejected: Integer; const AFirstProblem: string);
+    constructor Create(AAccepted: Integer; const AProblems: TArray<string>);
     property Accepted: Integer read FAccepted;
-    property Rejected: Integer read FRejected;
-    property FirstProblem: string read FFirstProblem;
+    property Rejected: Integer read GetRejected;
+    property Problems: TArray<string> read FProblems;
   end;
 
 function LoadEventsFromFile(const AFileName: string;
@@ -39,12 +39,16 @@ resourcestring
 
 { TImportReport }
 
-constructor TImportReport.Create(AAccepted, ARejected: Integer;
-  const AFirstProblem: string);
+constructor TImportReport.Create(AAccepted: Integer;
+  const AProblems: TArray<string>);
 begin
   FAccepted := AAccepted;
-  FRejected := ARejected;
-  FFirstProblem := AFirstProblem;
+  FProblems := AProblems;
+end;
+
+function TImportReport.GetRejected: Integer;
+begin
+  Result := Length(FProblems);
 end;
 
 function TryReadText(AItem: TJSONObject; AIndex: Integer; const AName: string;
@@ -113,9 +117,10 @@ var
   Content: string;
   Root: TJSONValue;
   Events: TList<TLogEvent>;
+  Problems: TList<string>;
   Event: TLogEvent;
-  Index, Rejected: Integer;
-  Problem, FirstProblem: string;
+  Index: Integer;
+  Problem: string;
 begin
   try
     Content := TFile.ReadAllText(AFileName, TEncoding.UTF8);
@@ -131,25 +136,24 @@ begin
     if not (Root is TJSONArray) then
       raise EEventImportError.CreateFmt(SNotArray, [AFileName]);
 
-    Rejected := 0;
-    FirstProblem := '';
     Events := TList<TLogEvent>.Create;
     try
-      for Index := 0 to TJSONArray(Root).Count - 1 do
-        if TryElementToEvent(TJSONArray(Root).Items[Index], Index + 1, Event,
-          Problem) then
-          Events.Add(Event)
-        else
-        begin
-          Inc(Rejected);
-          if FirstProblem = '' then
-            FirstProblem := Problem;
-        end;
-      Result := Events.ToArray;
+      Problems := TList<string>.Create;
+      try
+        for Index := 0 to TJSONArray(Root).Count - 1 do
+          if TryElementToEvent(TJSONArray(Root).Items[Index], Index + 1, Event,
+            Problem) then
+            Events.Add(Event)
+          else
+            Problems.Add(Problem);
+        Result := Events.ToArray;
+        AReport := TImportReport.Create(Length(Result), Problems.ToArray);
+      finally
+        Problems.Free;
+      end;
     finally
       Events.Free;
     end;
-    AReport := TImportReport.Create(Length(Result), Rejected, FirstProblem);
   finally
     Root.Free;
   end;

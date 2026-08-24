@@ -106,7 +106,8 @@ Two failure modes, two mechanisms:
   nothing to return, so `EEventImportError` is raised with the file name in the message and the stored
   history is untouched.
 - **A record is unusable** — not an object, or missing or unreadable `time`, `text` or `severity`. It is
-  skipped, counted, and the first problem is kept so the message says something the user can act on.
+  skipped and its problem kept, so the report can name every record the file lost rather than only
+  the first. Where those problems are shown is [ADR 0014](0014-import-problems-window.md).
 
 What counts as unusable is deliberately narrow. `severity` is matched case-insensitively against the
 same `SeverityNames` the rest of the application uses, so `ERROR` and `error` both pass while `Critical`
@@ -147,8 +148,8 @@ everything twice, and the only remedy is deleting the database.
 
 To revisit if the assumptions change: a request to de-duplicate, which would need a definition of
 sameness — probably the triple of time, text and severity — and would turn the insert into an upsert
-against a unique index rather than the primary key; files large enough that holding the DOM matters;
-or a requirement to report every problem rather than the first.
+against a unique index rather than the primary key; or files large enough that holding the DOM
+matters.
 
 Append made one absence conspicuous immediately: with nothing in the application removing events, the
 only route back to empty would have been deleting the file named in ADR 0005. So the window carries a

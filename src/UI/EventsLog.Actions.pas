@@ -32,11 +32,12 @@ type
 implementation
 
 uses
-  System.SysUtils, System.UITypes;
+  System.SysUtils, System.UITypes,
+  EventsLog.ProblemsDialog;
 
 resourcestring
   SImportedFrom = 'Imported %d events from %s.';
-  SSkipped = '%d records were skipped. The first problem was: %s';
+  SSkipped = '%d records were skipped:';
   SConfirmClear = 'Delete all %d stored events?' + sLineBreak +
     'This cannot be undone.';
   SGeneratorFailed = 'Generating was stopped, because the event could not be ' +
@@ -87,18 +88,22 @@ end;
 procedure TEventActions.ReportImport(const AFileName: string;
   const AReport: TImportReport);
 var
-  Lines: TArray<string>;
+  Summary: string;
   Kind: TMsgDlgType;
 begin
-  Lines := [Format(SImportedFrom, [AReport.Accepted, AFileName])];
+  Summary := Format(SImportedFrom, [AReport.Accepted, AFileName]);
   if AReport.Rejected > 0 then
-    Lines := Lines + [Format(SSkipped, [AReport.Rejected, AReport.FirstProblem])];
+  begin
+    ShowImportProblems(Summary + sLineBreak +
+      Format(SSkipped, [AReport.Rejected]), AReport.Problems);
+    Exit;
+  end;
 
-  if (AReport.Rejected > 0) or (AReport.Accepted = 0) then
+  if AReport.Accepted = 0 then
     Kind := mtWarning
   else
     Kind := mtInformation;
-  MessageDlg(string.Join(sLineBreak, Lines), Kind, [mbOK], 0);
+  MessageDlg(Summary, Kind, [mbOK], 0);
 end;
 
 procedure TEventActions.Clear;
