@@ -127,10 +127,10 @@
         <DCCReference Include="..\src\Model\EventsLog.Filter.pas"/>
         <DCCReference Include="..\src\Repository\EventsLog.Database.pas"/>
         <DCCReference Include="..\src\Repository\EventsLog.EventRepository.pas"/>
-        <DCCReference Include="..\src\Repository\EventsLog.Json.pas"/>
+        <DCCReference Include="..\src\Repository\EventsLog.EventFile.pas"/>
         <DCCReference Include="..\src\Services\EventsLog.Generator.pas"/>
         <DCCReference Include="..\src\Services\EventsLog.GeneratorSession.pas"/>
-        <DCCReference Include="EventsLog.Json.Tests.pas"/>
+        <DCCReference Include="EventsLog.EventFile.Tests.pas"/>
         <DCCReference Include="EventsLog.GeneratorSession.Tests.pas"/>
         <BuildConfiguration Include="Base">
             <Key>Base</Key>

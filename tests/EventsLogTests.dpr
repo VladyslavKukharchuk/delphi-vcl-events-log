@@ -12,10 +12,10 @@ uses
   EventsLog.Filter in '..\src\Model\EventsLog.Filter.pas',
   EventsLog.Database in '..\src\Repository\EventsLog.Database.pas',
   EventsLog.EventRepository in '..\src\Repository\EventsLog.EventRepository.pas',
-  EventsLog.Json in '..\src\Repository\EventsLog.Json.pas',
+  EventsLog.EventFile in '..\src\Repository\EventsLog.EventFile.pas',
   EventsLog.Generator in '..\src\Services\EventsLog.Generator.pas',
   EventsLog.GeneratorSession in '..\src\Services\EventsLog.GeneratorSession.pas',
-  EventsLog.Json.Tests in 'EventsLog.Json.Tests.pas',
+  EventsLog.EventFile.Tests in 'EventsLog.EventFile.Tests.pas',
   EventsLog.GeneratorSession.Tests in 'EventsLog.GeneratorSession.Tests.pas';
 
 var

@@ -4,7 +4,7 @@ interface
 
 uses
   System.Classes, Vcl.Dialogs,
-  EventsLog.Event, EventsLog.EventRepository, EventsLog.Json,
+  EventsLog.Event, EventsLog.EventRepository, EventsLog.EventFile,
   EventsLog.GeneratorSession;
 
 type
@@ -14,7 +14,6 @@ type
     FOpenDialog: TOpenDialog;
     FSession: TGeneratorSession;
     FOnDataChanged: TNotifyEvent;
-    procedure ReportImport(const AFileName: string; const AReport: TImportReport);
     procedure DataChanged;
   public
     constructor Create(const ARepository: IEventRepository;
@@ -32,13 +31,14 @@ type
 implementation
 
 uses
-  System.SysUtils, System.UITypes;
+  System.SysUtils, System.UITypes,
+  EventsLog.ImportPreview;
 
 resourcestring
-  SImportedFrom = 'Imported %d events from %s.';
-  SSkipped = '%d records were skipped. The first problem was: %s';
+  SNotStored = 'The imported events could not be stored:' + sLineBreak + '%s';
   SConfirmClear = 'Delete all %d stored events?' + sLineBreak +
     'This cannot be undone.';
+  SNotCleared = 'The stored events could not be deleted:' + sLineBreak + '%s';
   SGeneratorFailed = 'Generating was stopped, because the event could not be ' +
     'stored:' + sLineBreak + '%s';
 
@@ -72,7 +72,6 @@ begin
     Exit;
   try
     Events := LoadEventsFromFile(FOpenDialog.FileName, Report);
-    FRepository.InsertMany(Events);
   except
     on E: EEventImportError do
     begin
@@ -80,25 +79,19 @@ begin
       Exit;
     end;
   end;
+
+  if not ConfirmImport(FOpenDialog.FileName, Report, Events) then
+    Exit;
+  try
+    FRepository.InsertMany(Events);
+  except
+    on E: Exception do
+    begin
+      MessageDlg(Format(SNotStored, [E.Message]), mtError, [mbOK], 0);
+      Exit;
+    end;
+  end;
   DataChanged;
-  ReportImport(FOpenDialog.FileName, Report);
-end;
-
-procedure TEventActions.ReportImport(const AFileName: string;
-  const AReport: TImportReport);
-var
-  Lines: TArray<string>;
-  Kind: TMsgDlgType;
-begin
-  Lines := [Format(SImportedFrom, [AReport.Accepted, AFileName])];
-  if AReport.Rejected > 0 then
-    Lines := Lines + [Format(SSkipped, [AReport.Rejected, AReport.FirstProblem])];
-
-  if (AReport.Rejected > 0) or (AReport.Accepted = 0) then
-    Kind := mtWarning
-  else
-    Kind := mtInformation;
-  MessageDlg(string.Join(sLineBreak, Lines), Kind, [mbOK], 0);
 end;
 
 procedure TEventActions.Clear;
@@ -111,7 +104,15 @@ begin
   if MessageDlg(Format(SConfirmClear, [Stored]), mtWarning, [mbYes, mbNo], 0,
     mbNo) <> mrYes then
     Exit;
-  FRepository.DeleteAll;
+  try
+    FRepository.DeleteAll;
+  except
+    on E: Exception do
+    begin
+      MessageDlg(Format(SNotCleared, [E.Message]), mtError, [mbOK], 0);
+      Exit;
+    end;
+  end;
   DataChanged;
 end;
 

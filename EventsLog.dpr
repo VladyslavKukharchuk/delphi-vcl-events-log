@@ -9,12 +9,13 @@ uses
   EventsLog.Filter in 'src\Model\EventsLog.Filter.pas',
   EventsLog.Database in 'src\Repository\EventsLog.Database.pas',
   EventsLog.EventRepository in 'src\Repository\EventsLog.EventRepository.pas',
-  EventsLog.Json in 'src\Repository\EventsLog.Json.pas',
+  EventsLog.EventFile in 'src\Repository\EventsLog.EventFile.pas',
   EventsLog.Generator in 'src\Services\EventsLog.Generator.pas',
   EventsLog.GeneratorSession in 'src\Services\EventsLog.GeneratorSession.pas',
   EventsLog.Table in 'src\UI\EventsLog.Table.pas',
   EventsLog.FilterBar in 'src\UI\EventsLog.FilterBar.pas',
-  EventsLog.Actions in 'src\UI\EventsLog.Actions.pas';
+  EventsLog.Actions in 'src\UI\EventsLog.Actions.pas',
+  EventsLog.ImportPreview in 'src\UI\EventsLog.ImportPreview.pas' {ImportPreviewForm};
 
 {$R *.res}
 

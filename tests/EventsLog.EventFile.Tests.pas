@@ -1,4 +1,4 @@
-unit EventsLog.Json.Tests;
+unit EventsLog.EventFile.Tests;
 
 interface
 
@@ -30,8 +30,7 @@ type
     procedure UnusableFileRaises(const AFileName: string);
 
     [Test]
-    [TestCase('names the record and the field', 'sample-events-invalid.json|record 2 has no time', '|')]
-    procedure FirstProblemIsUseful(const AFileName, AExpected: string);
+    procedure EveryRejectedRecordIsReported;
 
     [Test]
     procedure IdentifiersAreMintedAndDistinct;
@@ -56,13 +55,6 @@ type
 
     [Test]
     procedure RoundTripsWhatItWrote;
-
-    [Test]
-    [TestCase('month', '2,month')]
-    [TestCase('time zone', '8,time zone')]
-    [TestCase('above the range', '99,format')]
-    [TestCase('zero', '0,format')]
-    procedure NamesTheRejectedField(ACode: Integer; const AExpected: string);
   end;
 
   [TestFixture]
@@ -83,7 +75,7 @@ implementation
 
 uses
   System.SysUtils, System.IOUtils, System.DateUtils,
-  EventsLog.Event, EventsLog.Json;
+  EventsLog.Event, EventsLog.EventFile;
 
 { The test executable lives in tests\Win64\Debug, so the fixtures are found by
   walking up until the directory holding them appears. }
@@ -146,13 +138,15 @@ begin
   Assert.IsTrue(Raised, 'expected EEventImportError for ' + AFileName);
 end;
 
-procedure TJsonImportTests.FirstProblemIsUseful(const AFileName,
-  AExpected: string);
+procedure TJsonImportTests.EveryRejectedRecordIsReported;
 var
   Report: TImportReport;
 begin
-  LoadEventsFromFile(Sample(AFileName), Report);
-  Assert.AreEqual(AExpected, Report.FirstProblem);
+  LoadEventsFromFile(Sample('sample-events-invalid.json'), Report);
+  Assert.AreEqual(7, Integer(Length(Report.Problems)),
+    'one line per rejected record');
+  Assert.AreEqual('record 2 has no time', Report.Problems[0], 'first');
+  Assert.AreEqual('record 8 is not a JSON object', Report.Problems[6], 'last');
 end;
 
 procedure TJsonImportTests.IdentifiersAreMintedAndDistinct;
@@ -217,12 +211,6 @@ begin
   Written := TimeToText(Original);
   Assert.IsTrue(TryTextToTime(Written, Parsed), 'written form must parse back');
   Assert.AreEqual(Original, Parsed, 'the round trip must be exact');
-end;
-
-procedure TTimeTextTests.NamesTheRejectedField(ACode: Integer;
-  const AExpected: string);
-begin
-  Assert.AreEqual(AExpected, TimeProblemToStr(ACode));
 end;
 
 { TSeverityTests }

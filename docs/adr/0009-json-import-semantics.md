@@ -106,7 +106,8 @@ Two failure modes, two mechanisms:
   nothing to return, so `EEventImportError` is raised with the file name in the message and the stored
   history is untouched.
 - **A record is unusable** — not an object, or missing or unreadable `time`, `text` or `severity`. It is
-  skipped, counted, and the first problem is kept so the message says something the user can act on.
+  skipped and its problem kept, so the report can name every record the file lost rather than only
+  the first. Where those problems are shown is [ADR 0015](0015-import-preview-and-confirmation.md).
 
 What counts as unusable is deliberately narrow. `severity` is matched case-insensitively against the
 same `SeverityNames` the rest of the application uses, so `ERROR` and `error` both pass while `Critical`
@@ -117,9 +118,12 @@ severity is worse than admitting the record is broken. Unknown keys are ignored.
 `ioNoTZIsLocal` option — which is decision D3 spelled as a flag: a string carrying no offset is local
 time. A `Z` or an explicit `+03:00` is honoured and converted, where a hand-rolled reader had silently
 dropped the `Z` and treated a UTC timestamp as local while rejecting the offset form outright. The RTL
-parser also reports *which* part it rejected, so a bad timestamp says "the time zone is wrong" rather
-than only naming the field. Writing still goes through `FormatDateTime`, because `DateToISO8601` always
-appends a `Z` and would declare a local time to be UTC.
+can also report *which* component it rejected, but that detail is deliberately unused: a rejected
+record already names the field and quotes the offending string, which is what a user needs to fix
+the file. Naming the component as well cost a lookup table of nine words kept in step with an RTL
+convention, which is more to maintain than the extra word is worth. Writing still goes through
+`FormatDateTime`, because `DateToISO8601` always appends a `Z` and would declare a local time to be
+UTC.
 
 A key that is absent and a key holding the wrong kind of value are also distinguished, because
 `TryGetValue<string>` conflates them and the resulting message misleads: `"severity": 3` would be
@@ -144,8 +148,8 @@ everything twice, and the only remedy is deleting the database.
 
 To revisit if the assumptions change: a request to de-duplicate, which would need a definition of
 sameness — probably the triple of time, text and severity — and would turn the insert into an upsert
-against a unique index rather than the primary key; files large enough that holding the DOM matters;
-or a requirement to report every problem rather than the first.
+against a unique index rather than the primary key; or files large enough that holding the DOM
+matters.
 
 Append made one absence conspicuous immediately: with nothing in the application removing events, the
 only route back to empty would have been deleting the file named in ADR 0005. So the window carries a
