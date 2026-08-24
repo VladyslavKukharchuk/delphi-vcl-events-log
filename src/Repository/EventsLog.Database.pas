@@ -8,9 +8,6 @@ uses
 type
   EEventsDatabaseError = class(Exception);
 
-  { Owns the connection to the local SQLite database and makes sure its schema
-    exists. Units in this layer take the connection from here; nothing outside
-    the layer sees it. }
   TEventsDatabase = class
   private
     FConnection: TFDConnection;
@@ -111,7 +108,6 @@ end;
 
 procedure TEventsDatabase.EnsureSchema;
 begin
-  { ExecSQL runs one statement per call. }
   FConnection.ExecSQL(SqlCreateTable);
   FConnection.ExecSQL(SqlIndexTime);
   FConnection.ExecSQL(SqlIndexSeverity);

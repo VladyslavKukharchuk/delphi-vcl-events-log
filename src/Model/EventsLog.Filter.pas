@@ -12,9 +12,6 @@ const
   AllSeverities: TSeveritySet = [esInfo, esWarning, esError];
 
 type
-  { What the user asked to see. A value object carrying criteria and nothing
-    else: the predicate itself is a SQL where clause built by the repository,
-    so it exists in exactly one place (ADR 0007). }
   TEventFilter = record
   private
     FSearchText: string;

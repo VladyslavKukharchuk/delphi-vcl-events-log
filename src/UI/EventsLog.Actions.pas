@@ -8,14 +8,6 @@ uses
   EventsLog.GeneratorSession;
 
 type
-  { What the three buttons do. Each action that changed the stored history says
-    so through OnDataChanged, and the form answers by refreshing the table: the
-    actions never touch the table themselves, which is why they do not know it
-    exists (ADR 0012).
-
-    The import and clear dialogs live here rather than in the form, because the
-    code that knows what happened is the code that has something to say about
-    it. The generator's failure is the exception, and Poll says why. }
   TEventActions = class
   private
     FRepository: IEventRepository;
@@ -32,15 +24,7 @@ type
     procedure Clear;
     procedure ToggleGenerating;
     function IsGenerating: Boolean;
-    { Called from the form's timer while generating. Returns True when the
-      session has just been stopped by a failure, with AFailure holding the
-      message for the user. The caller shows that message rather than this
-      class, because it has to be shown after the timer is off: a modal dialog
-      with the timer still running would be reached again from behind itself. }
     function Poll(out AFailure: string): Boolean;
-    { The view has just been refreshed for somebody else's reason - an import, a
-      clear, a change of filter - so a generated event waiting to be shown has
-      been shown too, and the next tick has nothing left to do. }
     procedure ViewRefreshed;
     property OnDataChanged: TNotifyEvent read FOnDataChanged write FOnDataChanged;
   end;
@@ -69,9 +53,6 @@ end;
 
 destructor TEventActions.Destroy;
 begin
-  { Freeing the session stops the generator, and that has to happen before the
-    owner of the repository frees it: a queued event is stored on this thread
-    and would otherwise reach a repository that is gone (ADR 0011). }
   FSession.Free;
   inherited;
 end;
@@ -93,8 +74,6 @@ begin
     Events := LoadEventsFromFile(FOpenDialog.FileName, Report);
     FRepository.InsertMany(Events);
   except
-    { An unusable file is the user's problem to fix, so it is reported and the
-      stored history is left as it was. }
     on E: EEventImportError do
     begin
       MessageDlg(E.Message, mtError, [mbOK], 0);
@@ -126,12 +105,9 @@ procedure TEventActions.Clear;
 var
   Stored: Int64;
 begin
-  { The button is disabled when the history is empty, so this only guards
-    against a future path that mutates without refreshing. }
   Stored := FRepository.Count;
   if Stored = 0 then
     Exit;
-  { Irreversible, so No is the default button rather than Yes. }
   if MessageDlg(Format(SConfirmClear, [Stored]), mtWarning, [mbYes, mbNo], 0,
     mbNo) <> mrYes then
     Exit;
@@ -147,8 +123,6 @@ begin
     Exit;
   end;
   FSession.Stop;
-  { The timer stops with the session, so anything that arrived since its last
-    tick would stay invisible until something else refreshed the window. }
   if FSession.TakeStale then
     DataChanged;
 end;
@@ -167,7 +141,6 @@ function TEventActions.Poll(out AFailure: string): Boolean;
 var
   Problem: string;
 begin
-  { Taking the problem also stops the session, so this cannot report twice. }
   Result := FSession.TakeProblem(Problem);
   if Result then
   begin

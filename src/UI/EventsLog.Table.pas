@@ -1,4 +1,4 @@
-unit EventsLog.EventTable;
+unit EventsLog.Table;
 
 interface
 
@@ -7,34 +7,19 @@ uses
   EventsLog.Event, EventsLog.Filter, EventsLog.EventRepository;
 
 type
-  { The events table and the line under it. It owns the result of the current
-    query, because the list view is virtual and reads that array by index
-    (ADR 0008), and it owns the sentence that says how much of the history the
-    query actually returned.
-
-    The controls belong to the form, which got them from its .dfm. This class
-    drives them and must not free them (ADR 0012). }
   TEventTable = class
   private
     FListView: TListView;
     FStatusBar: TStatusBar;
-    { The result of the current query, and the only copy of what the user sees. }
     FVisible: TArray<TLogEvent>;
     FStored: Int64;
     function Summary(const AFilter: TEventFilter; AMatching: Int64): string;
   public
     constructor Create(AListView: TListView; AStatusBar: TStatusBar);
-    { Runs the query again and repaints. The only place that reads the
-      repository on the table's behalf. }
     procedure Refresh(const ARepository: IEventRepository;
       const AFilter: TEventFilter);
-    { The list view's OnData, one row at a time. }
     procedure ProvideItem(AItem: TListItem);
-    { Nothing can be queried: an empty table, and the reason where the count
-      would have been. }
     procedure ShowUnavailable(const AMessage: string);
-    { How many events are stored, as of the last Refresh. The form asks, because
-      it is the form that owns the button this decides the state of. }
     property StoredCount: Int64 read FStored;
   end;
 
@@ -56,9 +41,6 @@ begin
   FStatusBar := AStatusBar;
 end;
 
-{ The query is capped, so the window has to say when it is showing less than
-  what it could. Silence would read as "this is everything", and under a filter
-  so would a bare count: zero matches and an empty database look the same. }
 function TEventTable.Summary(const AFilter: TEventFilter;
   AMatching: Int64): string;
 begin
@@ -85,8 +67,6 @@ begin
   FListView.Invalidate;
 
   FStored := ARepository.Count;
-  { Counting twice would be counting the same rows twice when nothing is
-    filtered out. }
   if AFilter.IsUnfiltered then
     Matching := FStored
   else
