@@ -19,8 +19,13 @@ type
     EditSearch: TEdit;
     LabelSeverity: TLabel;
     ComboSeverity: TComboBox;
-    StatusBar: TStatusBar;
     ListViewEvents: TListView;
+    PanelPager: TPanel;
+    LabelPage: TLabel;
+    ButtonPreviousPage: TButton;
+    ButtonNextPage: TButton;
+    LabelPageSize: TLabel;
+    ComboPageSize: TComboBox;
     OpenDialogJson: TOpenDialog;
     TimerRefresh: TTimer;
     procedure FormCreate(Sender: TObject);
@@ -30,6 +35,9 @@ type
     procedure ButtonClearClick(Sender: TObject);
     procedure FilterChange(Sender: TObject);
     procedure ButtonGenerateClick(Sender: TObject);
+    procedure ButtonPreviousPageClick(Sender: TObject);
+    procedure ButtonNextPageClick(Sender: TObject);
+    procedure ComboPageSizeChange(Sender: TObject);
     procedure TimerRefreshTimer(Sender: TObject);
   private
     FRepository: IEventRepository;
@@ -52,13 +60,15 @@ implementation
 {$R *.dfm}
 
 resourcestring
-  SDatabaseUnavailable = 'The event database is not available.';
+  SDatabaseUnavailable = 'The event database is not available.' + sLineBreak +
+    '%s';
   SStartGenerating = 'Start generating';
   SStopGenerating = 'Stop generating';
 
 procedure TMainForm.FormCreate(Sender: TObject);
 begin
-  FTable := TEventTable.Create(ListViewEvents, StatusBar);
+  FTable := TEventTable.Create(ListViewEvents, LabelPage, ButtonPreviousPage,
+    ButtonNextPage, ComboPageSize);
   FFilterBar := TFilterBar.Create(EditSearch, ComboSeverity);
 end;
 
@@ -73,6 +83,7 @@ begin
   FRepository := ARepository;
   FActions := TEventActions.Create(FRepository, OpenDialogJson);
   FActions.OnDataChanged := DataChanged;
+  ButtonClear.Enabled := True;
   DataChanged(Self);
 end;
 
@@ -88,7 +99,6 @@ begin
   if FRepository = nil then
     Exit;
   FTable.Refresh(FRepository, FFilterBar.Filter);
-  ButtonClear.Enabled := FTable.StoredCount > 0;
   FActions.ViewRefreshed;
 end;
 
@@ -118,6 +128,21 @@ begin
   ShowGeneratingState;
 end;
 
+procedure TMainForm.ButtonPreviousPageClick(Sender: TObject);
+begin
+  FTable.GoPrevious;
+end;
+
+procedure TMainForm.ButtonNextPageClick(Sender: TObject);
+begin
+  FTable.GoNext;
+end;
+
+procedure TMainForm.ComboPageSizeChange(Sender: TObject);
+begin
+  FTable.ChangePageSize;
+end;
+
 procedure TMainForm.ShowGeneratingState;
 begin
   TimerRefresh.Enabled := FActions.IsGenerating;
@@ -143,8 +168,8 @@ begin
   ButtonClear.Enabled := False;
   ButtonGenerate.Enabled := False;
   FFilterBar.SetEnabled(False);
-  FTable.ShowUnavailable(SDatabaseUnavailable);
-  MessageDlg(AMessage, mtError, [mbOK], 0);
+  FTable.Clear;
+  MessageDlg(Format(SDatabaseUnavailable, [AMessage]), mtError, [mbOK], 0);
 end;
 
 end.

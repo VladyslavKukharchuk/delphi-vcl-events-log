@@ -1,6 +1,7 @@
 # 0010. Search is a case-folded substring, severity is one level at a time
 
-- **Status:** accepted
+- **Status:** accepted; the match count and the query limit are superseded by
+  [0017](0017-no-row-counts-and-no-query-limit.md)
 - **Date:** 2026-08-21
 
 ## Context

@@ -84,19 +84,65 @@ object MainForm: TMainForm
       OnChange = FilterChange
     end
   end
-  object StatusBar: TStatusBar
+  object PanelPager: TPanel
     Left = 0
-    Top = 542
+    Top = 528
     Width = 1000
-    Height = 19
-    Panels = <>
-    SimplePanel = True
+    Height = 33
+    Align = alBottom
+    BevelOuter = bvNone
+    TabOrder = 1
+    object LabelPage: TLabel
+      Left = 208
+      Top = 9
+      Width = 60
+      Height = 15
+      Caption = 'No events'
+    end
+    object ButtonPreviousPage: TButton
+      Left = 8
+      Top = 4
+      Width = 90
+      Height = 25
+      Caption = 'Previous'
+      Enabled = False
+      TabOrder = 0
+      OnClick = ButtonPreviousPageClick
+    end
+    object ButtonNextPage: TButton
+      Left = 104
+      Top = 4
+      Width = 90
+      Height = 25
+      Caption = 'Next'
+      Enabled = False
+      TabOrder = 1
+      OnClick = ButtonNextPageClick
+    end
+    object LabelPageSize: TLabel
+      Left = 825
+      Top = 9
+      Width = 84
+      Height = 15
+      Anchors = [akTop, akRight]
+      Caption = 'Rows per page:'
+    end
+    object ComboPageSize: TComboBox
+      Left = 915
+      Top = 5
+      Width = 70
+      Height = 23
+      Style = csDropDownList
+      Anchors = [akTop, akRight]
+      TabOrder = 2
+      OnChange = ComboPageSizeChange
+    end
   end
   object ListViewEvents: TListView
     Left = 0
     Top = 76
     Width = 1000
-    Height = 466
+    Height = 452
     Align = alClient
     Columns = <
       item

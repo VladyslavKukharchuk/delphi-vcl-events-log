@@ -5,9 +5,6 @@ interface
 uses
   System.SysUtils, EventsLog.Event, EventsLog.Filter, EventsLog.Database;
 
-const
-  DefaultQueryLimit = 1000;
-
 type
   EEventRepositoryError = class(Exception);
   IEventRepository = interface
@@ -15,25 +12,23 @@ type
     procedure Insert(const AEvent: TLogEvent);
     procedure InsertMany(const AEvents: TArray<TLogEvent>);
     procedure DeleteAll;
-    function Query(const AFilter: TEventFilter;
-      ALimit: Integer = DefaultQueryLimit): TArray<TLogEvent>;
-    function Count: Int64; overload;
-    function Count(const AFilter: TEventFilter): Int64; overload;
+    function Count(const AFilter: TEventFilter): Int64;
+    function Page(const AFilter: TEventFilter;
+      AOffset, ALimit: Integer): TArray<TLogEvent>;
   end;
 
   TEventRepository = class(TInterfacedObject, IEventRepository)
   private
-    FDatabase: TEventsDatabase;
+    FDatabase: TDatabase;
     procedure Store(const ASql: string; const AEvent: TLogEvent);
   public
-    constructor Create(ADatabase: TEventsDatabase);
+    constructor Create(ADatabase: TDatabase);
     procedure Insert(const AEvent: TLogEvent);
     procedure InsertMany(const AEvents: TArray<TLogEvent>);
     procedure DeleteAll;
-    function Query(const AFilter: TEventFilter;
-      ALimit: Integer = DefaultQueryLimit): TArray<TLogEvent>;
-    function Count: Int64; overload;
-    function Count(const AFilter: TEventFilter): Int64; overload;
+    function Count(const AFilter: TEventFilter): Int64;
+    function Page(const AFilter: TEventFilter;
+      AOffset, ALimit: Integer): TArray<TLogEvent>;
   end;
 
 implementation
@@ -48,15 +43,23 @@ const
   SqlDeleteAll = 'delete from events';
   SqlSelect = 'select id, time, text, severity from events';
   SqlCount = 'select count(*) from events';
+  { id breaks ties on time, and it is there for correctness rather than for
+    order. Each page is its own query, free to sequence equal timestamps
+    differently from the last one, so without a unique final key an event
+    stored in the same millisecond as its neighbour can show up on two pages
+    or on neither. A JSON import is where that actually happens. }
+  SqlPageOrder = ' order by time desc, id desc limit :limit offset :offset';
 
   SUnreadableColumn = 'The stored event has an unreadable %s: %s';
 
 { Escapes what SQL LIKE would otherwise read as pattern syntax, so a user
-  typing % searches for a per cent sign instead of matching everything. }
+  typing % searches for a per cent sign instead of matching everything. The
+  backslash has to be doubled first: doing it after % and _ would escape the
+  backslashes those two lines just added. }
 function LikePattern(const AText: string): string;
 begin
   Result := AText
-    .Replace('\', '\', [rfReplaceAll])
+    .Replace('\', '\\', [rfReplaceAll])
     .Replace('%', '\%', [rfReplaceAll])
     .Replace('_', '\_', [rfReplaceAll]);
   Result := '%' + Result + '%';
@@ -129,7 +132,7 @@ end;
 
 { TEventRepository }
 
-constructor TEventRepository.Create(ADatabase: TEventsDatabase);
+constructor TEventRepository.Create(ADatabase: TDatabase);
 begin
   inherited Create;
   FDatabase := ADatabase;
@@ -162,8 +165,8 @@ begin
   end;
 end;
 
-function TEventRepository.Query(const AFilter: TEventFilter;
-  ALimit: Integer): TArray<TLogEvent>;
+function TEventRepository.Page(const AFilter: TEventFilter;
+  AOffset, ALimit: Integer): TArray<TLogEvent>;
 var
   Cursor: TFDQuery;
   Events: TList<TLogEvent>;
@@ -171,10 +174,10 @@ begin
   Cursor := TFDQuery.Create(nil);
   try
     Cursor.Connection := FDatabase.Connection;
-    Cursor.SQL.Text := SqlSelect + WhereClause(AFilter) +
-      ' order by time desc limit :limit';
+    Cursor.SQL.Text := SqlSelect + WhereClause(AFilter) + SqlPageOrder;
     BindFilter(Cursor, AFilter);
     Cursor.ParamByName('limit').AsInteger := ALimit;
+    Cursor.ParamByName('offset').AsInteger := AOffset;
     Cursor.Open;
     Events := TList<TLogEvent>.Create;
     try
@@ -195,11 +198,6 @@ end;
 procedure TEventRepository.DeleteAll;
 begin
   FDatabase.Connection.ExecSQL(SqlDeleteAll);
-end;
-
-function TEventRepository.Count: Int64;
-begin
-  Result := FDatabase.Connection.ExecSQLScalar(SqlCount);
 end;
 
 function TEventRepository.Count(const AFilter: TEventFilter): Int64;

@@ -6,15 +6,14 @@ uses
   System.SysUtils, FireDAC.Comp.Client;
 
 type
-  EEventsDatabaseError = class(Exception);
+  EDatabaseOpenError = class(Exception);
 
-  TEventsDatabase = class
+  TDatabase = class
   private
     FConnection: TFDConnection;
     FFileName: string;
     procedure EnsureDirectory;
     procedure Configure;
-    procedure EnsureSchema;
   public
     constructor Create;
     destructor Destroy; override;
@@ -39,15 +38,6 @@ const
   DatabaseFolderName = 'EventsLog';
   DatabaseName = 'events.db';
 
-  SqlCreateTable =
-    'create table if not exists events (' +
-    '  id text primary key,' +
-    '  time text not null,' +
-    '  text text not null,' +
-    '  severity text not null)';
-  SqlIndexTime = 'create index if not exists idx_events_time on events(time)';
-  SqlIndexSeverity = 'create index if not exists idx_events_severity on events(severity)';
-
 function DatabaseDirectory: string;
 begin
   Result := TPath.Combine(TPath.GetCachePath, DatabaseFolderName);
@@ -58,9 +48,9 @@ begin
   Result := TPath.Combine(DatabaseDirectory, DatabaseName);
 end;
 
-{ TEventsDatabase }
+{ TDatabase }
 
-constructor TEventsDatabase.Create;
+constructor TDatabase.Create;
 begin
   inherited Create;
   FFileName := DatabaseFileName;
@@ -69,31 +59,30 @@ begin
   try
     Configure;
     FConnection.Open;
-    EnsureSchema;
   except
     on E: Exception do
     begin
       FreeAndNil(FConnection);
-      raise EEventsDatabaseError.CreateFmt('Cannot open the event database %s.'
+      raise EDatabaseOpenError.CreateFmt('Cannot open the database %s.'
         + sLineBreak + '%s: %s', [FFileName, E.ClassName, E.Message]);
     end;
   end;
 end;
 
-destructor TEventsDatabase.Destroy;
+destructor TDatabase.Destroy;
 begin
   FConnection.Free;
   inherited;
 end;
 
-procedure TEventsDatabase.EnsureDirectory;
+procedure TDatabase.EnsureDirectory;
 begin
   if not ForceDirectories(DatabaseDirectory) then
-    raise EEventsDatabaseError.CreateFmt('Cannot create the data directory %s.',
+    raise EDatabaseOpenError.CreateFmt('Cannot create the data directory %s.',
       [DatabaseDirectory]);
 end;
 
-procedure TEventsDatabase.Configure;
+procedure TDatabase.Configure;
 begin
   FConnection.DriverName := 'SQLite';
   FConnection.LoginPrompt := False;
@@ -104,13 +93,6 @@ begin
   FConnection.Params.Values['LockingMode'] := 'Normal';
   FConnection.Params.Values['JournalMode'] := 'WAL';
   FConnection.Params.Values['Synchronous'] := 'Normal';
-end;
-
-procedure TEventsDatabase.EnsureSchema;
-begin
-  FConnection.ExecSQL(SqlCreateTable);
-  FConnection.ExecSQL(SqlIndexTime);
-  FConnection.ExecSQL(SqlIndexSeverity);
 end;
 
 end.
