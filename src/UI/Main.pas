@@ -65,7 +65,13 @@ end;
 procedure TMainForm.Attach(const ARepository: IEventRepository;
   const AProblem: string);
 begin
-  FActions := TEventActions.Create(ARepository, OpenDialogJson);
+  if ARepository = nil then
+  begin
+    EnterDegradedMode(AProblem);
+    Exit;
+  end;
+  FRepository := ARepository;
+  FActions := TEventActions.Create(FRepository, OpenDialogJson);
   FActions.OnDataChanged := DataChanged;
   DataChanged(Self);
 end;
@@ -79,6 +85,8 @@ end;
 
 procedure TMainForm.DataChanged(Sender: TObject);
 begin
+  if FRepository = nil then
+    Exit;
   FTable.Refresh(FRepository, FFilters.Filter);
   ButtonClear.Enabled := FTable.StoredCount > 0;
   FActions.ViewRefreshed;

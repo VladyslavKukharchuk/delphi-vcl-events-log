@@ -10,39 +10,17 @@ const
 
 type
   EEventRepositoryError = class(Exception);
-
-  { Everything the rest of the application is allowed to ask of the stored
-    history. It is an interface so that code above this layer can be exercised
-    against a fake instead of a database file (ADR 0013); TEventRepository is
-    its only production implementation and lives beside it, in this unit.
-
-    Reference counted, as every Delphi interface is: the last reference to go
-    destroys the object, so nothing anywhere calls Free on a repository. }
   IEventRepository = interface
     ['{F33D6671-3303-4230-AF2C-5427DE0BF82D}']
-    { One statement in its own implicit transaction. At one event a second the
-      batching InsertMany needs would only buy a window in which events are
-      lost (ADR 0007). }
     procedure Insert(const AEvent: TLogEvent);
-    { Import appends. The inserts share one explicit transaction, because a
-      file can hold thousands of rows (ADR 0009). }
     procedure InsertMany(const AEvents: TArray<TLogEvent>);
-    { The only path in the application that removes events, and it removes all
-      of them. There is no per-event delete because nothing asks for one. }
     procedure DeleteAll;
     function Query(const AFilter: TEventFilter;
       ALimit: Integer = DefaultQueryLimit): TArray<TLogEvent>;
     function Count: Int64; overload;
-    { How many events the filter matches. The window needs it to tell a filter
-      that hides events from a query that was capped by its limit. }
     function Count(const AFilter: TEventFilter): Int64; overload;
   end;
 
-  { The only place that speaks SQL. Rows become TLogEvent values before they
-    leave, so no dataset crosses out of this layer.
-
-    The database is not owned here: it is created and freed by the composition
-    root, which outlives every reference to this object (ADR 0013). }
   TEventRepository = class(TInterfacedObject, IEventRepository)
   private
     FDatabase: TEventsDatabase;
