@@ -132,7 +132,7 @@
         <DCCReference Include="src\Model\EventsLog.Filter.pas"/>
         <DCCReference Include="src\Repository\EventsLog.Database.pas"/>
         <DCCReference Include="src\Repository\EventsLog.EventRepository.pas"/>
-        <DCCReference Include="src\Repository\EventsLog.Json.pas"/>
+        <DCCReference Include="src\Repository\EventsLog.EventFile.pas"/>
         <DCCReference Include="src\Services\EventsLog.Generator.pas"/>
         <DCCReference Include="src\Services\EventsLog.GeneratorSession.pas"/>
         <DCCReference Include="src\UI\EventsLog.Table.pas"/>

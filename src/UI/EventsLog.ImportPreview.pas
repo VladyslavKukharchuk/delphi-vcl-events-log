@@ -5,7 +5,7 @@ interface
 uses
   System.Classes, Vcl.Controls, Vcl.Forms, Vcl.StdCtrls, Vcl.ExtCtrls,
   Vcl.ComCtrls,
-  EventsLog.Event, EventsLog.Json;
+  EventsLog.Event, EventsLog.EventFile;
 
 type
   TImportPreviewForm = class(TForm)

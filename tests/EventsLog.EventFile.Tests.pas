@@ -1,4 +1,4 @@
-unit EventsLog.Json.Tests;
+unit EventsLog.EventFile.Tests;
 
 interface
 
@@ -75,7 +75,7 @@ implementation
 
 uses
   System.SysUtils, System.IOUtils, System.DateUtils,
-  EventsLog.Event, EventsLog.Json;
+  EventsLog.Event, EventsLog.EventFile;
 
 { The test executable lives in tests\Win64\Debug, so the fixtures are found by
   walking up until the directory holding them appears. }

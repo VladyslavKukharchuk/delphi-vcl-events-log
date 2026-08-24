@@ -4,7 +4,7 @@ interface
 
 uses
   System.Classes, Vcl.Dialogs,
-  EventsLog.Event, EventsLog.EventRepository, EventsLog.Json,
+  EventsLog.Event, EventsLog.EventRepository, EventsLog.EventFile,
   EventsLog.GeneratorSession;
 
 type
