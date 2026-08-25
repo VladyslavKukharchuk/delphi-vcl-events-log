@@ -17,7 +17,7 @@ The Status column below says which are still current, so nothing has to be read 
 | [0007](0007-event-repository.md) | One `insert` per event, one connection on the UI thread, re-query to refresh | current; import revised by 0009 |
 | [0008](0008-listview-for-the-events-table.md) | A virtual `TListView` in report mode | current; status line removed by 0017 |
 | [0009](0009-json-import-semantics.md) | Import appends, identifiers are minted, bad records are skipped and reported | current; reporting revised by 0014, commit by 0015 |
-| [0010](0010-search-and-severity-filter.md) | Substring search on every keystroke; severity as one drop-down | current; match count removed by 0017 |
+| [0010](0010-search-and-severity-filter.md) | Substring search on every keystroke; severity as one drop-down | current; match count and query limit removed by 0017 |
 | [0011](0011-event-generator-thread.md) | A `TThread` that exists only while it runs, waiting on a `TEvent` | current |
 | [0012](0012-splitting-the-form-into-ui-blocks.md) | The form splits into plain blocks driving controls it still owns | current |
 | [0013](0013-repository-interface-and-composition-root.md) | `IEventRepository`, with the object graph built in the `.dpr` | current |

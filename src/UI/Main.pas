@@ -87,6 +87,11 @@ begin
   DataChanged(Self);
 end;
 
+{ The order is load-bearing. Freeing the actions is what stops the generator,
+  and a generated event still in flight is stored on this thread, so it has to
+  happen while the repository is still alive — every reference to it goes when
+  this form does (ADR 0011, ADR 0013). The two blocks after it drive controls
+  the form owns and therefore free none of them (ADR 0012). }
 procedure TMainForm.FormDestroy(Sender: TObject);
 begin
   FActions.Free;

@@ -61,7 +61,7 @@ about it, or each where the knowledge is.
 
 ## Decision
 
-**The form is split into three plain classes in `src/UI` — `TEventTable`, `TFilterPanel`,
+**The form is split into three plain classes in `src/UI` — `TEventTable`, `TFilterBar`,
 `TEventActions` — each driving controls the form continues to own, plus `TGeneratorSession` in
 `src/Services` for the generator's lifetime. Blocks report that the history changed; the form is the
 only thing that refreshes. Dialogs live with the knowledge, except the generator's failure, which the

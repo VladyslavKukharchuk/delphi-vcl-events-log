@@ -5,7 +5,7 @@
   removed.
 - **Date:** 2026-08-24
 - **Partially supersedes:** [0008](0008-listview-for-the-events-table.md) (the status line),
-  [0010](0010-search-and-severity-filter.md) (the match count)
+  [0010](0010-search-and-severity-filter.md) (the match count and the query limit behind it)
 
 ## Context
 

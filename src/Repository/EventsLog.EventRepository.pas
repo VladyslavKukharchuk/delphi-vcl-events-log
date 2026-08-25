@@ -43,11 +43,9 @@ const
   SqlDeleteAll = 'delete from events';
   SqlSelect = 'select id, time, text, severity from events';
   SqlCount = 'select count(*) from events';
-  { id breaks ties on time, and it is there for correctness rather than for
-    order. Each page is its own query, free to sequence equal timestamps
-    differently from the last one, so without a unique final key an event
-    stored in the same millisecond as its neighbour can show up on two pages
-    or on neither. A JSON import is where that actually happens. }
+  { id is here to break ties on time, not to order by: without a unique final
+    key an event sharing a millisecond with its neighbour can show up on two
+    pages or on neither (ADR 0018). }
   SqlPageOrder = ' order by time desc, id desc limit :limit offset :offset';
 
   SUnreadableColumn = 'The stored event has an unreadable %s: %s';

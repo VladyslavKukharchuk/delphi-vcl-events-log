@@ -68,8 +68,11 @@ FTS5.
 
 ## Consequences
 
-Every read and write converts the timestamp and the identifier, so those conversions belong in one
-place in `src/Repository` and nowhere else. SQLite will not stop anything from being written into
-these columns — a `REAL` timestamp inserted by mistake would be stored happily and sort in a
-different order from the text rows around it. The guard is that only one unit converts values, not
-the column types.
+Every read and write converts the timestamp and the identifier, so exactly one unit may own those
+conversions — and it is `EventsLog.Event` in `src/Model`, beside `SeverityNames` and the record whose
+values they encode. Not `src/Repository`, for the reason the decision above already gives: this text
+is not the database's private encoding. The JSON importer parses the same three forms and the table
+column displays them, so a pair of helpers in the repository would be a second copy for everyone
+else. SQLite will not stop anything from being written into these columns — a `REAL` timestamp
+inserted by mistake would be stored happily and sort in a different order from the text rows around
+it. The guard is that only one unit converts values, not the column types.

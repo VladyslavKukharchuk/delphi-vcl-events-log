@@ -9,8 +9,9 @@
 
 ADR 0009 settled that a record which cannot be read is skipped rather than failing the whole import,
 and that something is said about it afterwards. What it said was deliberately thin — a count and the
-text of the *first* problem, shown in the same `MessageDlg` as the success line. Its own "to revisit"
-list named the successor: report every problem rather than the first.
+text of the *first* problem, shown in the same `MessageDlg` as the success line. That was enough to
+prove nothing is hidden and not enough to act on, so this record is the successor it invited: report
+every problem rather than the first.
 
 That moves a constraint. One sentence fits in a message box; an unbounded list does not. `MessageDlg`
 renders a single static label with no scrolling, so a file whose timestamps are all in the wrong
