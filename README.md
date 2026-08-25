@@ -133,9 +133,9 @@ are where it would stop being comfortable long before it stopped working. Everyt
 schema needs `PRAGMA user_version` and a migration step first, which the schema does not have yet.
 
 1. **Keep `count(*)` off the hot path.** The table counts the whole filtered set on every refresh —
-   on each keystroke in the search box, and four times a second while the generator runs. Together
-   with a `LIKE` scan that is a full table scan several times a second, and it is the first thing
-   that would freeze the window on a large log. Counting with a cap
+   on each keystroke in the search box, and once per generated event — up to four times a second —
+   while the generator runs. Together with a `LIKE` scan that is a full table scan once a second,
+   and it is the first thing that would freeze the window on a large log. Counting with a cap
    (`select count(*) from (select 1 … limit 10001)`, shown as "10,000+") is the cheap fix; paging by
    key removes the need for a total altogether.
 2. **Index the text search with FTS5.** `text like '%…%'` can never use an index, so every search is
