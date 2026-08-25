@@ -8,6 +8,16 @@ Assignment statement: [docs/Test task Delphi Developer.md](docs/Test%20task%20De
 
 ![The generator filling the table, then the search box, then the severity filter](docs/media/demo.gif)
 
+## Download
+
+Ready-made builds are attached to the
+[v1.0.0 release](https://github.com/VladyslavKukharchuk/delphi-vcl-events-log/releases/tag/v1.0.0):
+`EventsLog-1.0.0-win64.zip` and `EventsLog-1.0.0-win32.zip`. Each holds one executable that needs
+nothing beside it — SQLite is linked statically
+([ADR 0004](docs/adr/0004-sqlite-for-local-persistence.md)) — plus `sample-events.json` to import.
+
+Building from source is under [Building and running](#building-and-running).
+
 ## Delphi version
 
 Built with **Embarcadero RAD Studio 37.0, Personal edition** (`bds.exe` file version
@@ -74,8 +84,8 @@ rather than read them in order.
 
 This edition of RAD Studio refuses command-line compiling — so building happens in the IDE:
 
-1. Open `EventsLog.dproj`, pick a platform and press **Shift+F9** (Build).
-2. The executable lands in `Win64\Debug\EventsLog.exe` (or the matching `Win32` / `Release` folder).
+1. Open `EventsLog.dproj`, pick a platform and a build configuration, then press **Shift+F9** (Build).
+2. The executable lands in `Win64\Release\EventsLog.exe` (or the matching `Win32` / `Debug` folder).
 
 The tests are a separate DUnitX project, `tests/EventsLogTests.dproj`, covering the JSON validation
 and the generator session against a fake repository. Build it in the IDE the same way; running it
