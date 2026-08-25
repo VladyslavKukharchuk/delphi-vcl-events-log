@@ -1,40 +1,35 @@
 # NNNN. Short title of the decision
 
-- **Status:** proposed | accepted | superseded by [NNNN](NNNN-short-title.md)
+- **Status:** accepted | superseded by [NNNN](NNNN-short-title.md)
 - **Date:** YYYY-MM-DD
 
 ## Context
 
-What problem are we trying to solve, and what is the situation around it? State the forces at play:
-requirements from the assignment, platform or tooling constraints, time budget, anything already decided
-in an earlier ADR. Someone reading this section alone should understand why a decision was needed at all.
+The problem, and the two or three constraints that actually decide it — a requirement from the
+statement, a platform limit, an earlier ADR. Not every force at play: only the ones a reader needs
+to follow the reasoning. Keep it under ten lines.
 
 ## Options
 
 ### Option 1 — name
 
-Short description of the approach.
-
 - Pro: …
-- Pro: …
-- Con: …
 - Con: …
 
 ### Option 2 — name
 
-Short description of the approach.
-
 - Pro: …
 - Con: …
 
+Only options that were genuinely in play. An alternative rejected by the first constraint belongs in
+one line of Context, not in a section of its own.
+
 ## Decision
 
-The option we chose, stated plainly.
-
-Why it won: the reasoning that made this option better than the alternatives for *this* project — which
-pros mattered most, which cons we accepted and why they are tolerable here.
+The option chosen, stated in one sentence, then why it beat the closest alternative and which cost
+was accepted. This is the section a reviewer reads; the ones above exist to make it followable.
 
 ## Consequences
 
-What this decision makes easier, what it makes harder, and what we will have to revisit if the
-assumptions above change.
+Optional, and at most a short paragraph. Reserve it for a trap the code cannot state itself — the
+thing that will look like a bug to the next reader. Skip it when there is nothing of that kind.

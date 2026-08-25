@@ -66,7 +66,9 @@ Dependencies point one way: `src/UI` → `src/Services` → `src/Repository` →
 errors travel out as results or exceptions. No `TDataSet` leaves `src/Repository`: a query turns rows
 into `TLogEvent` values before returning them.
 
-Every decision worth questioning is written down in [docs/adr/](docs/adr/).
+Every decision worth questioning is written down as an ADR. [docs/adr/](docs/adr/) opens with a
+one-line index of all eighteen, so you can pick the ones you want to argue with rather than read
+them in order.
 
 ## Building and running
 

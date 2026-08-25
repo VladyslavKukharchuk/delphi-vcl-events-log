@@ -62,9 +62,12 @@ Every key technical decision is recorded as an ADR in `docs/adr/`. A decision is
 - File name: `NNNN-short-title.md`, sequential number starting at `0001` (e.g. `0001-use-tlistview-for-event-table.md`).
 - Use [docs/adr/0000-template.md](docs/adr/0000-template.md) as the starting point.
 - Each ADR must state:
-  - **Context** — the problem being solved and the constraints that shape it.
-  - **Options** — the alternatives considered, each with its pros and cons.
-  - **Decision** — the option chosen and why it won over the others.
+  - **Context** — the problem being solved and the two or three constraints that actually shape it, not every force at play.
+  - **Options** — the alternatives that were genuinely in play, each as a short list of pros and cons. An alternative ruled out by the first constraint belongs in one line of Context, not in a section of its own.
+  - **Decision** — the option chosen, why it beat the closest alternative, and which cost was accepted.
+- **Consequences** is optional and at most a short paragraph, reserved for a trap the code cannot state itself. Omit it when there is nothing of that kind to say.
+- Keep a record short enough to be read: aim for 60 lines and treat 100 as the ceiling. A reviewer who skips an ADR because of its length learns nothing from it.
+- Add a row to [docs/adr/README.md](docs/adr/README.md) in the same change — it is the index a reviewer reads first, and it is where a superseded record is marked as such.
 - ADRs are append-only: an existing record is never rewritten. When a decision changes, add a new ADR, mark the old one as superseded and link the two.
 - Write the ADR in the same commit or pull request as the change it describes.
 
