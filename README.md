@@ -6,6 +6,8 @@ that appends one random event a second.
 
 Assignment statement: [docs/Test task Delphi Developer.md](docs/Test%20task%20Delphi%20Developer.md).
 
+![The generator filling the table, then the search box, then the severity filter](docs/media/demo.gif)
+
 ## Delphi version
 
 Built with **Embarcadero RAD Studio 37.0, Personal edition** (`bds.exe` file version
@@ -86,6 +88,8 @@ make clean     delete the build output of both projects
 `make` deliberately has no build target, for the reason above — and for the same reason there is no
 CI pipeline.
 
+![The DUnitX runner: 27 tests found, 27 passed, none failed](docs/media/tests-passing.jpg)
+
 ## Data
 
 ### The JSON file
@@ -98,6 +102,13 @@ An array of objects with three string fields. `tests/sample-events.json` is the 
   { "time": "2026-08-19T09:02:47.880", "text": "Disk space on volume C is below 15 per cent", "severity": "Warning" }
 ]
 ```
+
+`time` is ISO 8601, and a trailing `Z` or an explicit offset is honoured and converted to local time;
+`severity` is `Info`, `Warning` or `Error` compared without regard to case, and an unknown value makes
+the record invalid — skipped and reported, never silently turned into `Info`. Identifiers are minted
+on import, so an `id` key in the file is ignored and importing the same file twice stores its events
+twice. An import **appends** rather than replaces, since the generator writes to the same log
+([ADR 0009](docs/adr/0009-json-import-semantics.md)); *Clear all events* is what starts it empty.
 
 Two more files sit beside it as fixtures for the tests and as something to try by hand:
 `sample-events-invalid.json`, valid JSON whose records are broken one way each, and
