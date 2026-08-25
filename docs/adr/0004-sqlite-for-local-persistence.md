@@ -13,9 +13,9 @@ that a reviewer reads it as a decision and not as a misunderstanding of scope.
 
 - Users receive a single `.exe`. Anything needing an installer, a service or a DLL beside the
   executable is excluded — which rules out a client/server database outright.
-- RAD Studio 37.0 Personal includes FireDAC with the SQLite driver, verified on disk for Win32 and
-  Win64, including `FireDAC.Phys.SQLiteWrapper.Stat` — the unit that links SQLite into the executable
-  instead of loading `sqlite3.dll`.
+- RAD Studio 13 Community Edition includes FireDAC with the SQLite driver, verified on disk for
+  Win32 and Win64, including `FireDAC.Phys.SQLiteWrapper.Stat` — the unit that links SQLite into
+  the executable instead of loading `sqlite3.dll`.
 - A background thread will append while the UI thread reads.
 - ADR 0001 keeps `src/Model` free of anything but plain types, so nothing chosen here may leak a
   dataset out of `src/Repository`.

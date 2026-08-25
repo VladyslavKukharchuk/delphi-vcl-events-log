@@ -1,6 +1,6 @@
 # Running the tests from a console.
 #
-# There is deliberately no build target. RAD Studio 37.0 Personal edition
+# There is deliberately no build target. RAD Studio 13 Community Edition
 # refuses command-line compiling - both msbuild and dcc64 answer "This version
 # of the product does not support command line compiling" - so building happens
 # in the IDE and only running happens here.
