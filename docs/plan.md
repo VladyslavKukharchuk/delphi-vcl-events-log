@@ -1,7 +1,7 @@
 # Implementation plan
 
 Working tracker for the "Events Log" assignment. Source of truth for scope is
-[Test task Delphi Developer.docx](Test%20task%20Delphi%20Developer.docx) — this file only
+[Test task Delphi Developer.md](Test%20task%20Delphi%20Developer.md) — this file only
 restates it as a checklist.
 
 Tick a box when the corresponding pull request is merged, not when the code is written.
@@ -88,14 +88,3 @@ recorded in an ADR.
       text this application never produces. Recorded in
       [ADR 0010](adr/0010-search-and-severity-filter.md); the README states the limit under what could
       be improved.
-
-## Out of scope
-
-Not asked for by the statement and not wanted for this project either, so deliberately not built. These belong in the README section
-about what could be improved with more time:
-
-- Unit tests beyond the JSON validation covered by P5 - the repository and the form have none.
-- Saving the list back to JSON.
-- Editing an event, or deleting one event rather than all of them (P4 clears everything or nothing).
-- Sorting by column.
-- Persisting window state, filters or the last opened file.

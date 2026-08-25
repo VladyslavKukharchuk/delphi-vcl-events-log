@@ -5,7 +5,7 @@ Working rules for this repository.
 ## Context
 
 Test assignment for a Delphi Developer (Trainee / Junior) position — a VCL application called "Events Log".
-Full statement: [docs/Test task Delphi Developer.docx](docs/Test%20task%20Delphi%20Developer.docx). The statement is the source of truth for scope: do not add features "just in case" and do not drop anything from the list of requirements.
+Full statement: [docs/Test task Delphi Developer.md](docs/Test%20task%20Delphi%20Developer.md). The statement is the source of truth for scope: do not add features "just in case" and do not drop anything from the list of requirements.
 
 ## Environment
 
