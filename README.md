@@ -136,61 +136,34 @@ executable elsewhere does not bring the data along.
 
 ## What could be improved with more time
 
-### Carrying millions of events
-
-The application is sized for the load the statement describes, one event a second. The items below
-are where it would stop being comfortable long before it stopped working. Everything that touches the
-schema needs `PRAGMA user_version` and a migration step first, which the schema does not have yet.
-
-1. **Keep `count(*)` off the hot path.** The table counts the whole filtered set on every refresh —
+1. **Recognise an import that has already been done.** Opening the same file twice stores its events
+   twice, because identifiers are minted as the file is read rather than taken from it. A content
+   key — `(time, text, severity)` behind a unique index, with `insert or ignore` — changes no file
+   format, but it collapses two distinct events sharing a millisecond, a message and a level, which
+   is what a pair of workers emitting the same line does. That guess about identity is avoidable:
+   what a user calls "already imported" is a file, not an event, so recording which import produced
+   which events would let the import preview say so and let them choose.
+2. **A filter on a time range** — the last hour, today, or a chosen span. For a log this is a more
+   natural cut than text search, and unlike text search it rests on `idx_events_time`, which already
+   exists, so it stays fast at any size.
+3. **Keep `count(*)` off the hot path.** The table counts the whole filtered set on every refresh —
    on each keystroke in the search box, and once per generated event — up to four times a second —
-   while the generator runs. Together with a `LIKE` scan that is a full table scan once a second,
-   and it is the first thing that would freeze the window on a large log. Counting with a cap
-   (`select count(*) from (select 1 … limit 10001)`, shown as "10,000+") is the cheap fix; paging by
-   key removes the need for a total altogether.
-2. **Index the text search with FTS5.** `text like '%…%'` can never use an index, so every search is
-   a second full scan. An FTS5 shadow table with the trigram tokenizer turns "contains" into an
-   indexed lookup and, as a side effect, removes the ASCII-only case folding recorded in
-   [ADR 0010](docs/adr/0010-search-and-severity-filter.md) — `помилка` would finally match
-   `Помилка`. The cost is a set of triggers and roughly half again the database size.
-3. **Page by key instead of by offset.** `offset` makes SQLite walk past every row it skips, so page
-   500 costs five hundred times page 1. A `where (time, id) < (:lastTime, :lastId)` predicate makes
-   every page cost the same. The trade is real and revises
-   [ADR 0018](docs/adr/0018-paged-events-table.md): no jumping to page 137, only newer/older plus a
-   jump by time.
-4. **Encode the columns for the index, and mint UUIDv7.** `time` is 23 bytes of ISO text, `severity`
-   a whole word, `id` a 36-character UUID as the primary key. Size is the smaller problem; locality
-   is the larger one, because a random v4 identifier lands on a random B-tree page at every insert.
-   Integer time, integer severity and a 16-byte blob id would shrink the indexes, and UUIDv7 — being
-   time-ordered — would let the index append again while keeping the "nobody coordinates" property
-   that won [ADR 0003](docs/adr/0003-uuid-event-identifiers.md).
-5. **One composite index in place of two thin ones.** An index over three distinct severities buys
-   little, and every query has the same shape: filter, then `order by time desc`. A composite
-   `(severity, time desc)` — or partial indexes on Warning and Error — serves that shape directly,
-   with `ANALYZE` so the planner has statistics to choose it.
-
-### Development and observability
-
-1. **Give the application a log of its own.** An events log that records nothing about itself is a
+   while the generator runs, and on a large log it is the first thing that would freeze the window.
+   Counting with a cap (`select count(*) from (select 1 … limit 10001)`, shown as "10,000+") is the
+   cheap fix. Paging by key rather than by `offset` — which makes SQLite walk past every row it
+   skips — removes the need for a total altogether, and costs the page numbers with it: no jumping
+   to page 137, only newer and older.
+4. **Fold case beyond ASCII.** SQLite is linked statically, without ICU, so `LIKE` folds case for
+   ASCII letters and for nothing else: `помилка` does not match `Помилка`. That is the price of
+   shipping one executable with no DLL beside it, not an oversight. An FTS5 shadow table with the
+   trigram tokenizer fixes the folding and, as a side effect, turns `text like '%…%'` — which can
+   never use an index — into an indexed lookup. The cost is a set of triggers and roughly half again
+   the database size.
+5. **Colour the row by severity.** Red for Error, amber for Warning. All three levels look alike
+   today, so an error sinks into the Info around it, and the log is something read rather than
+   scanned.
+6. **Give the application a log of its own.** An events log that records nothing about itself is a
    poor witness. A file under `%LOCALAPPDATA%\EventsLog\log\` holding the startup facts — database
    path, schema version, SQLite version — plus every query slower than a threshold and every
    exception, together with an `Application.OnException` handler, would mean a problem in the field
    leaves a trace instead of a dialog nobody wrote down.
-2. **Settle the build question.** There is no CI because this edition refuses command-line
-   compiling. Either a licence tier that unlocks `dcc32`/`dcc64`, or a self-hosted runner on a
-   machine with the IDE, or a deliberate no — and in that last case, automating everything that does
-   not need a compiler: broken Markdown links, duplicate ADR numbers, IDE noise in `.dproj`, and the
-   check that every new unit under `src/` is registered in the `.dpr`.
-
-### Usability
-
-1. **Colour the row by severity.** Red for Error, amber for Warning. All three levels look alike
-   today, so an error sinks into the Info around it. This is the cheapest change here and the one
-   most felt: the log becomes something scanned rather than read.
-2. **Debounce the search, and show when a query is slow.** Every keystroke queries the database
-   immediately. Waiting 250–300 ms after the last one is a handful of lines and the largest single
-   improvement in how quick the window feels, before any SQL is touched. A busy indicator past
-   ~200 ms would stop a working query from looking like a frozen table.
-3. **A filter on a time range** — the last hour, today, or a chosen span. For a log this is a more
-   natural cut than text search, and unlike text search it rests on an index, so it stays fast at
-   any size.
