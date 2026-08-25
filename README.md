@@ -24,7 +24,7 @@ Only the standard RTL/VCL and FireDAC are used — no third-party components or 
 - **Import from JSON.** *Import JSON…* opens a file, validates it and shows a preview before
   anything is stored: one tab lists the events that will be imported, another lists every record
   that was rejected and why. A malformed file or a broken record never reaches the store and never
-  crashes the application ([ADR 0014](docs/adr/0014-import-problems-window.md),
+  crashes the application ([ADR 0009](docs/adr/0009-json-import-semantics.md),
   [ADR 0015](docs/adr/0015-import-preview-and-confirmation.md)).
 - **Search and filter.** The search box matches the event text, the combo box narrows the table to
   one severity. Both are evaluated as SQL, not as a scan in memory
@@ -66,7 +66,9 @@ Dependencies point one way: `src/UI` → `src/Services` → `src/Repository` →
 errors travel out as results or exceptions. No `TDataSet` leaves `src/Repository`: a query turns rows
 into `TLogEvent` values before returning them.
 
-Every decision worth questioning is written down in [docs/adr/](docs/adr/).
+Every decision worth questioning is written down as an ADR. [docs/adr/](docs/adr/) opens with an
+index of all fifteen, grouped by what they decide, so you can pick the ones you want to argue with
+rather than read them in order.
 
 ## Building and running
 
