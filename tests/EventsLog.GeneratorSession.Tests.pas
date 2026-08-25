@@ -25,6 +25,9 @@ type
     procedure StartAndStopAreIdempotent;
 
     [Test]
+    procedure AProblemLeftUnreadDoesNotStopTheNextRun;
+
+    [Test]
     procedure DestroyingARunningSessionReturns;
   end;
 
@@ -51,6 +54,7 @@ type
   TFakeRepository = class(TInterfacedObject, IEventRepository)
   private
     FStored: Integer;
+    FAttempts: Integer;
     FFailWith: string;
   public
     constructor Create(const AFailWith: string = '');
@@ -60,6 +64,10 @@ type
     function Count(const AFilter: TEventFilter): Int64;
     function Page(const AFilter: TEventFilter;
       AOffset, ALimit: Integer): TArray<TLogEvent>;
+    procedure Recover;
+    { Counts the calls a failing fake refuses as well as the ones it accepts,
+      so a test can wait for a failure without taking it from the session. }
+    property Attempts: Integer read FAttempts;
     property Stored: Integer read FStored;
   end;
 
@@ -71,9 +79,15 @@ end;
 
 procedure TFakeRepository.Insert(const AEvent: TLogEvent);
 begin
+  Inc(FAttempts);
   if FFailWith <> '' then
     raise EEventRepositoryError.Create(FFailWith);
   Inc(FStored);
+end;
+
+procedure TFakeRepository.Recover;
+begin
+  FFailWith := '';
 end;
 
 procedure TFakeRepository.InsertMany(const AEvents: TArray<TLogEvent>);
@@ -198,6 +212,47 @@ begin
     Assert.IsFalse(Session.IsRunning, 'Stop must stop it');
     Session.Stop;
     Assert.IsFalse(Session.IsRunning, 'a second Stop must be ignored, not fatal');
+  finally
+    Session.Free;
+  end;
+end;
+
+{ The window only asks for a problem every 250 ms, so stopping the generator
+  inside that window leaves the message unread. It belongs to the run that
+  produced it: kept, it would be answered by the next run's first poll and stop
+  a generator that had nothing wrong with it. }
+procedure TGeneratorSessionTests.AProblemLeftUnreadDoesNotStopTheNextRun;
+var
+  Fake: TFakeRepository;
+  Repository: IEventRepository;
+  Session: TGeneratorSession;
+  Problem: string;
+begin
+  Fake := TFakeRepository.Create('the disk is full');
+  Repository := Fake;
+  Session := TGeneratorSession.Create(Repository, TestInterval);
+  try
+    Session.Start;
+    { Waiting on the attempt rather than on TakeProblem is the whole point:
+      taking it is what the user beat by clicking Stop first. }
+    Assert.IsTrue(WaitUntil(
+      function: Boolean
+      begin
+        Result := Fake.Attempts > 0;
+      end), 'the generator never reached the repository');
+    Session.Stop;
+
+    Fake.Recover;
+    Session.Start;
+    Assert.IsTrue(WaitUntil(
+      function: Boolean
+      begin
+        Result := Fake.Stored > 0;
+      end), 'the second run stored nothing within the timeout');
+    Assert.IsFalse(Session.TakeProblem(Problem),
+      'a run must not inherit the problem of the one before it');
+    Assert.IsTrue(Session.IsRunning,
+      'the second run had nothing wrong with it and must still be going');
   finally
     Session.Free;
   end;

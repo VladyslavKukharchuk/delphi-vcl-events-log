@@ -48,6 +48,12 @@ procedure TGeneratorSession.Start;
 begin
   if FGenerator <> nil then
     Exit;
+  { A problem belongs to the run that produced it. The window polls for one
+    every 250 ms, so a stop inside that window leaves it unread, and carrying it
+    into this run would report it against a healthy generator and stop it on its
+    first tick. FStale is deliberately kept: it is a repaint still owed for an
+    event that really was stored. }
+  FProblem := '';
   FGenerator := TEventGenerator.Create(EventArrived, FInterval);
 end;
 
