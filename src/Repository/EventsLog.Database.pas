@@ -34,7 +34,7 @@ uses
   FireDAC.Phys.SQLiteWrapper.Stat,
   { This unit issues no query of its own, but FireDAC links dataset support only
     where a DApt unit is used somewhere in the project. Dropping the three below
-    leaves every TFDQuery failing at run time (ADR 0016). }
+    leaves every TFDQuery failing at run time (ADR 0006). }
   FireDAC.DatS, FireDAC.DApt.Intf, FireDAC.DApt;
 
 const

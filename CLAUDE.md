@@ -57,7 +57,7 @@ The layer folders are the structure decided in [ADR 0001](docs/adr/0001-layer-fo
 
 ## Architecture decision records
 
-Every key technical decision is recorded as an ADR in `docs/adr/`. A decision is "key" when it is hard to reverse later or when a reasonable reviewer could ask "why this way?" — for example the grid control choice, the JSON parsing strategy, the threading model, or the in-memory data structure. Small local choices do not need an ADR.
+Every key technical decision is recorded as an ADR in `docs/adr/`. A decision is "key" when it is hard to reverse later or when a reasonable reviewer could ask "why this way?" — for example the grid control choice, the JSON parsing strategy, the threading model, or the in-memory data structure. Small local choices do not need an ADR: moving a routine into its own unit, renaming a type or splitting a file is a refactoring, and a record of it costs a reviewer's attention without buying anything.
 
 - File name: `NNNN-short-title.md`, sequential number starting at `0001` (e.g. `0001-use-tlistview-for-event-table.md`).
 - Use [docs/adr/0000-template.md](docs/adr/0000-template.md) as the starting point.
@@ -66,9 +66,9 @@ Every key technical decision is recorded as an ADR in `docs/adr/`. A decision is
   - **Options** — the alternatives that were genuinely in play, each as a short list of pros and cons. An alternative ruled out by the first constraint belongs in one line of Context, not in a section of its own.
   - **Decision** — the option chosen, why it beat the closest alternative, and which cost was accepted.
 - **Consequences** is optional and at most a short paragraph, reserved for a trap the code cannot state itself. Omit it when there is nothing of that kind to say.
-- Keep a record short enough to be read: aim for 60 lines and treat 100 as the ceiling. A reviewer who skips an ADR because of its length learns nothing from it.
-- Add a row to [docs/adr/README.md](docs/adr/README.md) in the same change — it is the index a reviewer reads first, and it is where a superseded record is marked as such.
-- ADRs are append-only: an existing record is never rewritten. When a decision changes, add a new ADR, mark the old one as superseded and link the two.
+- Keep a record short enough to be read: aim for 60 lines per question it settles, and treat 100 as the ceiling for a record settling one. A record covering two coupled questions may run longer, but only in proportion — length has to be bought with a decision, never with prose. A reviewer who skips an ADR because of its length learns nothing from it.
+- Add a row to [docs/adr/README.md](docs/adr/README.md) in the same change — it is the index a reviewer reads first, grouped by topic rather than by number, and it is where a revised record is marked as such.
+- A decision that changes is never rewritten in place: add a new ADR, revise or supersede the old one in its header, and link the two. The exception is a record whose decision was reversed within the same working cycle and shipped to nobody — fold it into the record that replaced it rather than leave a dead end for a reviewer to read. Numbers are never reused, so the gaps that leaves are expected.
 - Write the ADR in the same commit or pull request as the change it describes.
 
 ## Git

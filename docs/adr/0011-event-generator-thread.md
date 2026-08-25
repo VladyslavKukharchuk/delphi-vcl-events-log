@@ -60,10 +60,9 @@ window does when events arrive under the user's cursor.
 
 ### What the window does when a generated event fails to store
 
-1. **Let the exception surface.** Con: the same dialog every second, with the generator still running
-   behind it.
-2. **Stop the generator and report once.** Pro: the failure is stated and the cause of the repetition
-   removed. Con: an `except` in the form.
+Letting the exception surface means the same dialog every second with the generator still running
+behind it. The alternative is to stop the generator and report once — the failure is stated and the
+cause of the repetition removed, at the price of an `except` in the form.
 
 ## Decision
 
@@ -95,8 +94,9 @@ scrolled down keeps their place.
 
 ## Consequences
 
-The form has a lifecycle to keep in order — the generator is stopped before the repository is freed,
+Shutdown gains an order that has to be kept: the generator is stopped before the repository is freed,
 because a queued event is stored on the main thread and would otherwise reach a repository that is
-gone. `FormDestroy` says so, and that comment is the only thing standing between this design and a
-crash on exit. The insert is also still on the main thread, so an interval much shorter than a
-second, or a database on a slow disk, would be felt in the window.
+gone. This record is where that hazard starts; the full order it grew into is written out in
+[ADR 0013](0013-repository-interface-and-composition-root.md). The insert is also still on the main
+thread, so an interval much shorter than a second, or a database on a slow disk, would be felt in the
+window.

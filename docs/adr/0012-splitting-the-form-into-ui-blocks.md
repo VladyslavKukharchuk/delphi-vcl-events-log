@@ -54,10 +54,9 @@ to follow any one of them.
 
 ### Who refreshes the table, and who shows dialogs
 
-Either each block refreshes the table itself — which means every block needs a reference to it, and
-the import knows about the status bar — or a block says the history changed and the form refreshes.
-Dialogs likewise: all in the form, which then has to be handed the import report to say anything
-about it, or each where the knowledge is.
+Either each block refreshes the table itself, which means every block needs a reference to it, or a
+block says the history changed and the form refreshes. Dialogs likewise: all in the form, which must
+then be handed the import report to say anything about it, or each where the knowledge is.
 
 ## Decision
 
@@ -90,11 +89,10 @@ typing in the search box while generating would run every query twice.
 
 ## Consequences
 
-The destruction order is load-bearing. The actions are freed first because that stops the generator,
-and a generated event still in flight is stored on this thread and would otherwise reach a repository
-that is gone. The blocks also hold controls they do not own: nothing but a comment prevents a `Free`
-in the wrong destructor, and the symptom would be a window that crashes on close rather than a
-compiler error.
+The blocks hold controls they do not own: nothing but a comment prevents a `Free` in the wrong
+destructor, and the symptom would be a window that crashes on close rather than a compiler error.
+The shutdown order this splits across ([ADR 0011](0011-event-generator-thread.md)) does not change —
+the actions are freed first because that stops the generator — it only moves one level out.
 
 Not delivered by this decision: tests. `TGeneratorSession` is now the only piece with no `Vcl.*`, but
 it takes a concrete `TEventRepository`, so testing it would write to the real database. That

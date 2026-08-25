@@ -66,6 +66,14 @@ text is deliberately left unindexed: a `like '%…%'` search cannot use a B-tree
 otherwise would be worse than not having one. If text search ever needs to be fast, the answer is
 FTS5.
 
+These statements live in `src/Repository/EventsLog.Schema.pas` behind a single `EnsureSchema`, which
+the composition root calls once between opening the connection and building the repository — so the
+startup sequence reads in order and constructing a repository does not quietly mutate the database.
+What they do is *bootstrap*, not migration: `if not exists` handles "the file is new" and nothing
+else. A future column means writing the `alter table` by hand and deciding what happens to files that
+already exist, because Delphi has no migration tooling; `EnsureSchema` is the seam where a versioned
+runner would go if that day came.
+
 ## Consequences
 
 Every read and write converts the timestamp and the identifier, so exactly one unit may own those
@@ -76,3 +84,8 @@ column displays them, so a pair of helpers in the repository would be a second c
 else. SQLite will not stop anything from being written into these columns — a `REAL` timestamp
 inserted by mistake would be stored happily and sort in a different order from the text rows around
 it. The guard is that only one unit converts values, not the column types.
+
+`EventsLog.Database` keeps `FireDAC.DatS`, `FireDAC.DApt.Intf` and `FireDAC.DApt` in its `uses`
+clause even though it issues no query of its own. FireDAC links dataset support only when a DApt unit
+is used somewhere in the project, and dropping them would leave every `TFDQuery` failing at run time.
+The clause carries a comment saying so, because it otherwise reads as a leftover.

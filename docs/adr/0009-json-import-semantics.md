@@ -1,7 +1,7 @@
 # 0009. Import appends, identifiers are minted, and how wrong a file may be
 
-- **Status:** accepted; the reporting half is revised by [0014](0014-import-problems-window.md), the
-  commit half by [0015](0015-import-preview-and-confirmation.md)
+- **Status:** accepted; the reporting and commit halves are revised by
+  [0015](0015-import-preview-and-confirmation.md)
 - **Date:** 2026-08-21
 - **Revises:** the import half of [ADR 0007](0007-event-repository.md), which had import replacing the
   stored history

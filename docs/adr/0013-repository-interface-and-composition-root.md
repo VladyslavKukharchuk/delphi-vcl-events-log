@@ -113,5 +113,5 @@ does and a console runner has no message loop. The session's interval is a const
 the same reason — so a test does not wait out a real second — and production never passes it.
 
 Still not testable: `TEventRepository` itself, which is only reachable against a real database file,
-so the SQL remains untested. That needs `TEventsDatabase` to accept a path instead of always
+so the SQL remains untested. That needs `TDatabase` to accept a path instead of always
 resolving one under `%LOCALAPPDATA%` (ADR 0005), which is its own decision.

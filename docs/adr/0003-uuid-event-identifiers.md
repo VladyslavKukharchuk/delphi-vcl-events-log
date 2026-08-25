@@ -56,6 +56,6 @@ which mints one. Nothing else in the application issues identifiers.
 
 ## Consequences
 
-A default-initialised `TLogEvent` has an all-zero identifier, which is a valid `TGUID` and not a
-marker the compiler will reject. An all-zero identifier reaching the table means something built an
-event by filling in fields instead of going through `New` or `Create`.
+An all-zero identifier reaching the table means something built an event by filling in fields instead
+of going through `New` or `Create` — it is a valid `TGUID`, so the compiler will not catch it. This
+is the zeroed-value trap [ADR 0002](0002-log-event-as-a-value-type.md) records, one field wider.

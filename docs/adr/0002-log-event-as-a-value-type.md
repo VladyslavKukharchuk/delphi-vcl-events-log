@@ -52,6 +52,7 @@ constant array of names shared by the JSON format and the table column, so the t
 
 ## Consequences
 
-A `TLogEvent` that nobody constructed is a valid zeroed value with an empty timestamp, and the
-compiler will not complain about it. Producers go through `TLogEvent.Create`; code that grows an
-array assigns constructed values rather than filling in fields of a default element.
+A `TLogEvent` that nobody constructed is a valid zeroed value — an empty timestamp, and later an
+all-zero identifier ([ADR 0003](0003-uuid-event-identifiers.md)) — and the compiler will not complain
+about it. Producers go through the constructor; code that grows an array assigns constructed values
+rather than filling in fields of a default element.

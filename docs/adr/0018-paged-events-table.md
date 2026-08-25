@@ -1,28 +1,33 @@
-# 0018. The events table is paged
+# 0018. The events table is paged, and the status bar is gone
 
 - **Status:** accepted
 - **Date:** 2026-08-24
-- **Partially supersedes:** [0017](0017-no-row-counts-and-no-query-limit.md) (the count and the
-  unbounded query; the status bar stays removed)
+- **Partially supersedes:** [0008](0008-listview-for-the-events-table.md) (the status line),
+  [0010](0010-search-and-severity-filter.md) (the match count as a sentence under the table)
 
 ## Context
 
-ADR 0017 removed both `Count` overloads and the thousand-row query limit, on the argument that the
-limit, the counts and the status line were one mechanism serving a requirement the statement never
-made. The cost it accepted is now the subject: `Query` materialises the whole result set on every
-refresh, and `RowToEvent` parses three values per row, so a hundred thousand matches is several
-hundred thousand string parses on the UI thread.
+The table was unbounded in one direction and over-explained in the other. `Query` returned every
+matching row and `TEventTable` held all of them, so `RowToEvent` parsed three values per row on every
+refresh — a hundred thousand matches is several hundred thousand string parses on the UI thread, four
+times a second while the generator runs. Meanwhile the window carried a status bar reporting matches
+against the total, which ADR 0008 had asked for on the grounds that without it "the window silently
+implies that what is visible is everything".
+
+Read against the statement, neither is required. The assignment asks for a table showing every
+attribute, robust JSON import, search by text, filtering by severity, and a background generator. It
+does not ask for a status bar, a row count, or a cap on what the table shows.
 
 Three things shape the answer. **The control is already virtual** — ADR 0008 chose `OwnerData` mode,
 so what costs is everything before the control is asked, which puts the problem in the repository and
-in `TEventTable`. **A cap is only dishonest if it hides something**, and both bounded designs below
-state what they show and let the user reach the rest. **The generator moves every index** — new
-events sort to the top of `order by time desc`, so any design that gives the user a position inside a
-large result has to answer what happens to that position a second later.
+in `TEventTable`. **A cap is only dishonest if it hides something**, so a bounded design that states
+what it is showing answers ADR 0008's objection without a status line. **The generator moves every
+index** — new events sort to the top of `order by time desc`, so any design that gives the user a
+position inside a large result has to answer what happens to that position a second later.
 
 ## Options
 
-### Option 1 — keep ADR 0017: fetch everything, every refresh
+### Option 1 — fetch everything, every refresh
 
 - Pro: no change, and the simplest possible `TEventTable`.
 - Con: memory and parse cost scale with the table, on the UI thread.
@@ -33,6 +38,8 @@ large result has to answer what happens to that position a second later.
 
 - Pro: the smallest bounded design — `ProvideItem` stays a plain array read with nothing to
   coordinate with the paint cycle, and every navigation is one query of a known size.
+- Pro: the page number states the size of the result, which is the information the status line
+  existed to carry.
 - Pro: stable while the table grows — a refresh keeps the user on page N, and the content shifts by
   at most a page boundary.
 - Con: new controls the statement does not ask for, and a log is more naturally scrolled than paged —
@@ -47,12 +54,12 @@ large result has to answer what happens to that position a second later.
   path needs a fallback that cannot raise — an edge case that shows as a blank row.
 - Con: dragging deep issues `OFFSET` queries that re-evaluate the filter for every skipped row, and
   keyset paging fixes the cost but not the shape a scrollbar needs — "the next N after this row".
-- Con: worst under a growing table. A user scrolled into the middle has every index shift underneath
-  them on each refresh, with no page number to make that comprehensible.
+- Con: worst under a growing table — every index shifts underneath a scrolled reader on each refresh,
+  with no page number to make that comprehensible.
 
 ## Decision
 
-Option 2. `IEventRepository` trades `Query` for two methods:
+Option 2, and the status bar goes with it. `IEventRepository` trades `Query` for two methods:
 
 ```pascal
 function Count(const AFilter: TEventFilter): Int64;
@@ -64,9 +71,9 @@ ordering: `order by time desc, id desc`. Each page is its own query, free to seq
 timestamps differently from the last one, so without a unique final key an event stored in the same
 millisecond as its neighbour shows up on two pages or on neither — and a JSON import, whose records
 often share a timestamp, is where that happens rather than in theory. No index covers the pair, since
-ADR 0006 indexed `time` alone, so SQLite sorts the ties itself, free at this size. `Count` is a
-single method rather than the overloaded pair ADR 0017 removed: `WhereClause` returns an empty string
-for an unfiltered filter, so the two cases need no separate entry point.
+ADR 0006 indexed `time` alone, so SQLite sorts the ties itself, free at this size. `Count` is one
+method rather than a filtered-and-unfiltered pair: `WhereClause` returns an empty string for an
+unfiltered filter, so the two cases need no separate entry point.
 
 `TEventTable` gains `FPage`, `FPageCount` and `FTotal`, and owns the controls that show them — the
 same shape as `TFilterBar` (ADR 0012). The page size is the user's, chosen from 50, 100, 200 and 500
@@ -75,12 +82,21 @@ scanning or looking for one event; changing it keeps the reader in place rather 
 first page. Changing the filter resets to page one; a refresh clamps the current page to the last one
 that still exists.
 
-Why option 2 won over option 1: the ceiling ADR 0017 made implicit becomes explicit again, and the
-page number states it rather than hiding it. Why it won over option 3: option 3 is the better
-interaction for a static log and the worse one for a growing one. The generator is not an edge case
-here — it is a required feature, it runs for as long as the user leaves it on, and it shifts every
-index on every insert. A page number survives that; a scroll position inside a very long virtual
-list does not, and option 3 has to fetch from inside the paint cycle to keep it.
+Why option 2 won over option 1: it makes the ceiling explicit, and the page number states it rather
+than hiding it. Why it won over option 3: option 3 is the better interaction for a static log and the
+worse one for a growing one. The generator is not an edge case here — it is a required feature and it
+shifts every index on every insert. A page number survives that; a scroll position inside a very long
+virtual list does not, and option 3 has to fetch from inside the paint cycle to keep it.
+
+**The status bar is removed rather than rewired.** Paging already says what it was asked to say, and
+"page 3 of 214 · 4318 events" belongs with the controls that change it, not in a strip at the bottom.
+Counting was not its only job, though: `EnterDegradedMode` also wrote the database-unavailable message
+there, and a control whose one remaining purpose is an error string — empty every other second the
+application runs — trades one kind of clutter for another. That message joins the modal dialog
+`EnterDegradedMode` already raises. What is lost is persistence, since the reason leaves the screen
+with the dialog; what remains is that import, clear, generate and the filters are all disabled, so
+the window reads as unusable rather than as empty (ADR 0013). The `Clear` confirmation stops naming a
+count for the same reason and simply asks.
 
 The cost accepted is the visible one: two buttons and a label the statement does not ask for, and
 paging is not how one usually reads a log. That is the price of a bounded query with no hidden state.
