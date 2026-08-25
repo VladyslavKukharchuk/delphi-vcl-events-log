@@ -144,18 +144,96 @@ executable elsewhere does not bring the data along.
 
 ## What could be improved with more time
 
-- **Case-insensitive search beyond ASCII.** SQLite's `LIKE` folds ASCII only, so searching
-  `помилка` will not match `Помилка`. Fixing it properly means a lowercased shadow column, a schema
-  change and a migration — declined here for text this application never produces
-  ([ADR 0010](docs/adr/0010-search-and-severity-filter.md)).
-- **Test coverage.** The JSON validation and the generator session are covered; the repository and
-  the form are not. The repository would need a test database, the form a UI harness.
-- **Sorting by column**, and a filter on a time range. The table is fixed to newest first.
-- **Editing an event, or deleting a single one.** Today the only removal is all or nothing.
-- **Export back to JSON.** Import is one-way.
-- **Remembering the session** — window size, the last filter, the last folder used for import.
-- **A portable mode**, keeping the database beside the executable for a copy-and-run install. It was
-  considered and rejected as its own decision, not overlooked
-  ([ADR 0005](docs/adr/0005-database-file-location.md)).
-- **A build and test pipeline.** Impossible in this edition, which is why `make` only runs what the
-  IDE has already built.
+Ordered within each group by how much it would matter, most significant first. Several of these
+revise a decision rather than extend it; where that is so, the ADR to supersede is named.
+
+### Carrying millions of events
+
+The application is sized for the load the statement describes, one event a second. The items below
+are where it would stop being comfortable long before it stopped working. Everything that touches the
+schema needs `PRAGMA user_version` and a migration step first, which the schema does not have yet.
+
+1. **Keep `count(*)` off the hot path.** The table counts the whole filtered set on every refresh —
+   on each keystroke in the search box, and four times a second while the generator runs. Together
+   with a `LIKE` scan that is a full table scan several times a second, and it is the first thing
+   that would freeze the window on a large log. Counting with a cap
+   (`select count(*) from (select 1 … limit 10001)`, shown as "10,000+") is the cheap fix; paging by
+   key removes the need for a total altogether.
+2. **Index the text search with FTS5.** `text like '%…%'` can never use an index, so every search is
+   a second full scan. An FTS5 shadow table with the trigram tokenizer turns "contains" into an
+   indexed lookup and, as a side effect, removes the ASCII-only case folding recorded in
+   [ADR 0010](docs/adr/0010-search-and-severity-filter.md) — `помилка` would finally match
+   `Помилка`. The cost is a set of triggers and roughly half again the database size.
+3. **Page by key instead of by offset.** `offset` makes SQLite walk past every row it skips, so page
+   500 costs five hundred times page 1. A `where (time, id) < (:lastTime, :lastId)` predicate makes
+   every page cost the same. The trade is real and revises
+   [ADR 0018](docs/adr/0018-paged-events-table.md): no jumping to page 137, only newer/older plus a
+   jump by time.
+4. **Encode the columns for the index, and mint UUIDv7.** `time` is 23 bytes of ISO text, `severity`
+   a whole word, `id` a 36-character UUID as the primary key. Size is the smaller problem; locality
+   is the larger one, because a random v4 identifier lands on a random B-tree page at every insert.
+   Integer time, integer severity and a 16-byte blob id would shrink the indexes, and UUIDv7 — being
+   time-ordered — would let the index append again while keeping the "nobody coordinates" property
+   that won [ADR 0003](docs/adr/0003-uuid-event-identifiers.md).
+5. **One composite index in place of two thin ones.** An index over three distinct severities buys
+   little, and every query has the same shape: filter, then `order by time desc`. A composite
+   `(severity, time desc)` — or partial indexes on Warning and Error — serves that shape directly,
+   with `ANALYZE` so the planner has statistics to choose it.
+
+Also on the list: ArrayDML for bulk import, a writer thread with its own connection once the event
+rate outgrows what [ADR 0007](docs/adr/0007-event-repository.md) assumes, and a retention policy so
+the file does not grow without end.
+
+### Development and observability
+
+1. **Make the database path a parameter.** `TDatabase` resolves its own location, and that single
+   detail is why the whole data-access layer is untested: there is no way to point it at a temporary
+   file. A constructor taking a file name, defaulting to today's path, opens the repository to tests
+   against an in-memory database.
+2. **Give the application a log of its own.** An events log that records nothing about itself is a
+   poor witness. A file under `%LOCALAPPDATA%\EventsLog\log\` holding the startup facts — database
+   path, schema version, SQLite version — plus every query slower than a threshold and every
+   exception, together with an `Application.OnException` handler, would mean a problem in the field
+   leaves a trace instead of a dialog nobody wrote down.
+3. **Settle the build question.** There is no CI because this edition refuses command-line
+   compiling. Either a licence tier that unlocks `dcc32`/`dcc64`, or a self-hosted runner on a
+   machine with the IDE, or a deliberate no — and in that last case, automating everything that does
+   not need a compiler: broken Markdown links, duplicate ADR numbers, IDE noise in `.dproj`, and the
+   check that every new unit under `src/` is registered in the `.dpr`.
+4. **A diagnostics window and a seed command.** Database path and size, journal mode, schema
+   version, the timing of recent queries, generator state, and a row count on demand rather than on
+   every refresh. Beside it, "seed N events" — without which neither a report about behaviour at
+   volume nor any measurement of the items above can be reproduced.
+5. **SQL tracing behind a switch.** FireDAC already ships `TFDMoniFlatFileClientLink`; a `-trace`
+   flag would log every statement with its timing, at no cost in dependencies. For a design that
+   puts all filtering in SQL, that is the instrument that matches it.
+
+Also on the list: lifting the paging arithmetic out of `TEventTable` into a plain object, so the
+off-by-one cases can be tested without a VCL control in the room.
+
+### Usability
+
+1. **Colour the row by severity.** Red for Error, amber for Warning. All three levels look alike
+   today, so an error sinks into the Info around it. This is the cheapest change here and the one
+   most felt: the log becomes something scanned rather than read.
+2. **Debounce the search, and show when a query is slow.** Every keystroke queries the database
+   immediately. Waiting 250–300 ms after the last one is a handful of lines and the largest single
+   improvement in how quick the window feels, before any SQL is touched. A busy indicator past
+   ~200 ms would stop a working query from looking like a frozen table.
+3. **More than one severity at a time.** The combo offers *All* or exactly one level, while the
+   question people actually ask is "Warning and Error, without Info". The model already carries a
+   set of severities; only the control is narrower.
+4. **An event card and clipboard support.** Long messages are cut off by the column and cannot be
+   read in full. A read-only card on double click, Ctrl+C over the selected rows, Ctrl+F into the
+   search box and Esc to clear it are the basics for a tool whose output ends up pasted into a
+   ticket.
+5. **A filter on a time range** — the last hour, today, or a chosen span. For a log this is a more
+   natural cut than text search, and unlike text search it rests on an index, so it stays fast at
+   any size.
+
+Also on the list: a follow mode that scrolls with new events and pauses when the reader scrolls up
+(a toggle, rather than the forced scrolling declined in
+[ADR 0011](docs/adr/0011-event-generator-thread.md)); export of the current view back to JSON or CSV;
+remembered window size, column widths and last filter; editing or deleting a single event rather than
+all of them; sorting by column; and a portable mode, considered and declined in
+[ADR 0005](docs/adr/0005-database-file-location.md).
