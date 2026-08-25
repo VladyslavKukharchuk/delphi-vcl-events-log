@@ -136,20 +136,13 @@ executable elsewhere does not bring the data along.
 
 ## What could be improved with more time
 
-The application is sized for the load the statement describes, one event a second. The six below are
-where it would stop being comfortable first, in the order I would take them. The first and the fourth
-touch the schema, and both need `PRAGMA user_version` and a migration step ahead of them, which the
-schema does not have yet.
-
-1. **Recognise an import that has already been done.** Identifiers are minted on import, so the same
-   file opened twice stores its events twice — [ADR 0009](docs/adr/0009-json-import-semantics.md)
-   chose that deliberately and named this as the cost. Undoing it needs a definition of identity the
-   file can carry. A content key — `(time, text, severity)` behind a unique index, with
-   `insert or ignore` — changes no file format, but it collapses two distinct events that share a
-   millisecond, a message and a level, which is what a pair of workers emitting the same line does.
-   The guess is avoidable: what a user calls "already imported" is a file, not an event, so recording
-   which import produced which events would let the preview from
-   [ADR 0015](docs/adr/0015-import-preview-and-confirmation.md) say so and let them choose.
+1. **Recognise an import that has already been done.** Opening the same file twice stores its events
+   twice, because identifiers are minted as the file is read rather than taken from it. A content
+   key — `(time, text, severity)` behind a unique index, with `insert or ignore` — changes no file
+   format, but it collapses two distinct events sharing a millisecond, a message and a level, which
+   is what a pair of workers emitting the same line does. That guess about identity is avoidable:
+   what a user calls "already imported" is a file, not an event, so recording which import produced
+   which events would let the import preview say so and let them choose.
 2. **A filter on a time range** — the last hour, today, or a chosen span. For a log this is a more
    natural cut than text search, and unlike text search it rests on `idx_events_time`, which already
    exists, so it stays fast at any size.
@@ -158,15 +151,14 @@ schema does not have yet.
    while the generator runs, and on a large log it is the first thing that would freeze the window.
    Counting with a cap (`select count(*) from (select 1 … limit 10001)`, shown as "10,000+") is the
    cheap fix. Paging by key rather than by `offset` — which makes SQLite walk past every row it
-   skips — removes the need for a total altogether, at a price that revises
-   [ADR 0018](docs/adr/0018-paged-events-table.md): no jumping to page 137, only newer and older.
-4. **Fold case beyond ASCII.** SQLite is linked without ICU, so `LIKE` folds case for ASCII letters
-   and for nothing else — `помилка` does not match `Помилка`, a limit
-   [ADR 0010](docs/adr/0010-search-and-severity-filter.md) accepted rather than overlooked. The
-   shipped data is all English, so the first Cyrillic file imported is what reaches it. An FTS5
-   shadow table with the trigram tokenizer fixes the folding and, as a side effect, turns
-   `text like '%…%'` — which can never use an index — into an indexed lookup. The cost is a set of
-   triggers and roughly half again the database size.
+   skips — removes the need for a total altogether, and costs the page numbers with it: no jumping
+   to page 137, only newer and older.
+4. **Fold case beyond ASCII.** SQLite is linked statically, without ICU, so `LIKE` folds case for
+   ASCII letters and for nothing else: `помилка` does not match `Помилка`. That is the price of
+   shipping one executable with no DLL beside it, not an oversight. An FTS5 shadow table with the
+   trigram tokenizer fixes the folding and, as a side effect, turns `text like '%…%'` — which can
+   never use an index — into an indexed lookup. The cost is a set of triggers and roughly half again
+   the database size.
 5. **Colour the row by severity.** Red for Error, amber for Warning. All three levels look alike
    today, so an error sinks into the Info around it, and the log is something read rather than
    scanned.
