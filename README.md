@@ -20,8 +20,8 @@ Building from source is under [Building and running](#building-and-running).
 
 ## Delphi version
 
-Built with **Embarcadero RAD Studio 37.0, Personal edition** (`bds.exe` file version
-37.0.60542.8024).
+Built with **Delphi 13 (RAD Studio 13), Community Edition** — compiler version 37.0, `bds.exe` file
+version 37.0.60542.8024.
 
 Only the standard RTL/VCL and FireDAC are used — no third-party components or packages.
 

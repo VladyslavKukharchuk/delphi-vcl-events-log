@@ -9,7 +9,7 @@ Full statement: [docs/Test task Delphi Developer.md](docs/Test%20task%20Delphi%2
 
 ## Environment
 
-- RAD Studio 37.0 (`C:\Program Files (x86)\Embarcadero\Studio\37.0`), Personal edition.
+- Delphi 13 / RAD Studio 13, Community Edition (`C:\Program Files (x86)\Embarcadero\Studio\37.0`, version 37.0).
 - `EventsLog.dproj`: `ProjectVersion 20.3`, `FrameworkType VCL`, platforms Win32 + Win64 (Win64 is the default).
 - There is no command-line build: this edition refuses it, and both `msbuild` and `dcc64` answer "This version of the product does not support command line compiling". Building happens in the IDE.
 - Standard RTL/VCL plus FireDAC for data access, per [ADR 0004](docs/adr/0004-sqlite-for-local-persistence.md). No third-party components or packages. SQLite is linked statically through `FireDAC.Phys.SQLiteWrapper.Stat`, so the executable ships with no DLL beside it.
